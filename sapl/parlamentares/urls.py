@@ -5,7 +5,9 @@ from sapl.parlamentares.views import (CargoMesaCrud, ColigacaoCrud,
                                       FiliacaoCrud, LegislaturaCrud,
                                       MandatoCrud, MesaDiretoraView,
                                       NivelInstrucaoCrud, ParlamentarCrud,
-                                      PartidoCrud, SessaoLegislativaCrud,
+                                      PartidoCrud,
+                                      PeriodoSessaoLegislativaCrud,
+                                      SessaoLegislativaCrud,
                                       TipoAfastamentoCrud, TipoDependenteCrud,
                                       TipoMilitarCrud)
 
@@ -16,7 +18,8 @@ app_name = AppConfig.name
 urlpatterns = [
     url(r'^parlamentar/', include(
         ParlamentarCrud.get_urls() + DependenteCrud.get_urls() +
-        FiliacaoCrud.get_urls() + MandatoCrud.get_urls()
+        FiliacaoCrud.get_urls() + MandatoCrud.get_urls() +
+        PeriodoSessaoLegislativaCrud.get_urls()
     )),
     url(r'^coligacao/',
         include(ColigacaoCrud.get_urls() +

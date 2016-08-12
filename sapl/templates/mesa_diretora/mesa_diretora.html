@@ -8,7 +8,7 @@
 		<fieldset class="form-group">
 			<legend>Escolha da Legislatura e da Sessão Legislativa</legend>
 	    <div class="row">
-	      <div class="col-md-6">
+	      <div class="col-md-4">
 	        <label>Escolha uma Legislatura</label>
 	        <select name="legislatura" class="form-control" onChange="form.submit();">
 	          {% for l in legislaturas %}
@@ -18,7 +18,7 @@
 	          {% endfor %}
 	        </select>
 	      </div>
-	      <div class="col-md-6">
+	      <div class="col-md-4">
 	        <label>Escolha uma Sessão Legislativa</label>
 	        <select name="sessao" class="form-control" onChange="form.submit();">
 	          {% for s in sessoes %}
@@ -28,7 +28,23 @@
 	          {% endfor %}
 	        </select>
 	      </div>
+				<div class="col-md-4">
+					<label>Escolha uma Período</label>
+					<select name="periodo" class="form-control" onChange="form.submit();">
+						{% for s in sessoes %}
+							<option value="{{s.id}}" {% if s == sessao_selecionada %} selected {% endif %}>
+								{{s}}
+							</option>
+						{% endfor %}
+					</select>
+				</div>
 	    </div>
+			<br />
+			<div class="row">
+				<div class="col-md-12" align="right">
+					<a href="" class="btn btn-primary">Adicionar Período</a>
+				</div>
+			</div>
 		</fieldset>
 		<br />
 		<fieldset class="form-group">

@@ -62,6 +62,26 @@ class SessaoLegislativa(models.Model):
             'fim': self.data_fim.year}
 
 
+class PeriodoSessaoLegislativa(models.Model):
+    sessao_legislativa = models.ForeignKey(SessaoLegislativa)
+    data_inicio = models.DateField(verbose_name=_('Data Início'))
+    data_fim = models.DateField(verbose_name=_('Data Fim'))
+
+    class Meta:
+        verbose_name = _('Período Sessão Legislativa')
+        verbose_name_plural = _('Períodos Sessões Legislativas')
+
+    def __str__(self):
+        inicio = (self.data_inicio.day + '/' +
+                  self.data_inicio.month + '/' +
+                  self.data_inicio.year)
+        fim = (self.data_fim.day + '/' +
+               self.data_fim.month + '/' +
+               self.data_fim.year)
+
+        return _('%(inicio)s - %(fim)s') % {'inicio': inicio, 'fim': fim}
+
+
 class Coligacao(models.Model):
     legislatura = models.ForeignKey(Legislatura, verbose_name=_('Legislatura'))
     nome = models.CharField(max_length=50, verbose_name=_('Nome'))

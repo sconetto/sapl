@@ -91,3 +91,7 @@ SituacaoMilitar:
 ComposicaoColigacao:
   {% trans 'Nome do Partido' %}:
   - partido
+
+PeriodoSessaoLegislativa:
+  {% trans 'Período da Sessão Legislativa' %}:
+  - data_inicio data_fim

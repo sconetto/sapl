@@ -12,7 +12,8 @@ from .forms import (ComposicaoColigacaoForm, FiliacaoForm, LegislaturaForm,
                     ParlamentarCreateForm, ParlamentarForm)
 from .models import (CargoMesa, Coligacao, ComposicaoColigacao, ComposicaoMesa,
                      Dependente, Filiacao, Legislatura, Mandato,
-                     NivelInstrucao, Parlamentar, Partido, SessaoLegislativa,
+                     NivelInstrucao, Parlamentar, Partido,
+                     PeriodoSessaoLegislativa, SessaoLegislativa,
                      SituacaoMilitar, TipoAfastamento, TipoDependente)
 
 CargoMesaCrud = Crud.build(CargoMesa, 'cargo_mesa')
@@ -24,6 +25,26 @@ TipoAfastamentoCrud = Crud.build(TipoAfastamento, 'tipo_afastamento')
 TipoMilitarCrud = Crud.build(SituacaoMilitar, 'tipo_situa_militar')
 
 DependenteCrud = MasterDetailCrud.build(Dependente, 'parlamentar', '')
+
+
+class PeriodoSessaoLegislativaCrud(MasterDetailCrud):
+    model = PeriodoSessaoLegislativa
+    parent_field = 'sessao_legislativa'
+    help_path = ''
+
+    class CreateView(MasterDetailCrud.CreateView):
+        def get_initial(self):
+            sessao_legislativa = SessaoLegislativa.objects.get(
+                id=self.kwargs['pk'])
+            return {'data_inicio': sessao_legislativa.data_inicio,
+                    'data_fim': sessao_legislativa.data_fim}
+
+    class UpdateView(MasterDetailCrud.UpdateView):
+        def get_initial(self):
+            sessao_legislativa = SessaoLegislativa.objects.get(
+                id=self.kwargs['pk'])
+            return {'data_inicio': sessao_legislativa.data_inicio,
+                    'data_fim': sessao_legislativa.data_fim}
 
 
 class MandatoCrud(MasterDetailCrud):
