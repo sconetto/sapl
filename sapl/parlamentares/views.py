@@ -220,6 +220,10 @@ class MesaDiretoraView(FormView):
                 [p.parlamentar for p in parlamentares]) - set(
                 parlamentares_ocupados))
 
+        periodos = PeriodoSessaoLegislativa.objects.filter(
+            sessao_legislativa=SessaoLegislativa.objects.filter(
+                legislatura=Legislatura.objects.last()).first())
+
         return self.render_to_response(
             {'legislaturas': Legislatura.objects.all(
             ).order_by('-data_inicio'),
@@ -230,7 +234,9 @@ class MesaDiretoraView(FormView):
                 legislatura=Legislatura.objects.last()).first(),
                 'composicao_mesa': mesa,
                 'parlamentares': parlamentares_vagos,
-                'cargos_vagos': cargos_vagos
+                'cargos_vagos': cargos_vagos,
+                'periodos': periodos,
+                'periodo_selecionado': periodos.first()
             })
 
     def post(self, request, *args, **kwargs):
@@ -246,6 +252,12 @@ class MesaDiretoraView(FormView):
                 return self.validation(request)
 
             composicao = ComposicaoMesa()
+
+            if 'periodo' in request.POST:
+                composicao.sessao_legislativa.periodo = (
+                    PeriodoSessaoLegislativa.objects.get(
+                        id=int(request.POST['periodo'])))
+
             composicao.sessao_legislativa = SessaoLegislativa.objects.get(
                 id=int(request.POST['sessao']))
             composicao.parlamentar = Parlamentar.objects.get(

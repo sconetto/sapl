@@ -31,9 +31,9 @@
 				<div class="col-md-4">
 					<label>Escolha uma Período</label>
 					<select name="periodo" class="form-control" onChange="form.submit();">
-						{% for s in sessoes %}
-							<option value="{{s.id}}" {% if s == sessao_selecionada %} selected {% endif %}>
-								{{s}}
+						{% for p in periodos %}
+							<option value="{{p.id}}" {% if p == periodo_selecionado %} selected {% endif %}>
+								{{p}}
 							</option>
 						{% endfor %}
 					</select>

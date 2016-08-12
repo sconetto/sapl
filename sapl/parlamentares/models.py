@@ -72,12 +72,12 @@ class PeriodoSessaoLegislativa(models.Model):
         verbose_name_plural = _('Períodos Sessões Legislativas')
 
     def __str__(self):
-        inicio = (self.data_inicio.day + '/' +
-                  self.data_inicio.month + '/' +
-                  self.data_inicio.year)
-        fim = (self.data_fim.day + '/' +
-               self.data_fim.month + '/' +
-               self.data_fim.year)
+        inicio = (str(self.data_inicio.day) + '/' +
+                  str(self.data_inicio.month) + '/' +
+                  str(self.data_inicio.year))
+        fim = (str(self.data_fim.day) + '/' +
+               str(self.data_fim.month) + '/' +
+               str(self.data_fim.year))
 
         return _('%(inicio)s - %(fim)s') % {'inicio': inicio, 'fim': fim}
 
