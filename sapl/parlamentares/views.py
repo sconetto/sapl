@@ -1,5 +1,6 @@
 from django.contrib import messages
-from django.core.urlresolvers import reverse_lazy
+from django.core.urlresolvers import reverse, reverse_lazy
+from django.http.response import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.translation import ugettext_lazy as _
@@ -233,6 +234,11 @@ class MesaDiretoraView(FormView):
             })
 
     def post(self, request, *args, **kwargs):
+        if 'adicionar-periodo' in request.POST:
+            return HttpResponseRedirect(
+                reverse('sapl.parlamentares:periodosessaolegislativa_create',
+                        kwargs={'pk': request.POST['sessao']}))
+
         if 'Incluir' in request.POST:
 
             if (not Legislatura.objects.all() or
