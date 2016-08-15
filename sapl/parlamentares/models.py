@@ -392,6 +392,19 @@ class ComposicaoMesa(models.Model):
     parlamentar = models.ForeignKey(Parlamentar)
     sessao_legislativa = models.ForeignKey(SessaoLegislativa)
     cargo = models.ForeignKey(CargoMesa)
+    data_inicio = models.DateField(
+        blank=True, null=True,
+        verbose_name=_('Data Início'))
+    data_fim = models.DateField(
+            blank=True, null=True,
+            verbose_name=_('Data Fim'))
+
+    def save(self, *args, **kwargs):
+        if not self.data_inicio:
+            self.data_inicio = self.sessao_legislativa.data_inicio
+        if not self.data_fim:
+            self.data_fim = self.sessao_legislativa.data_fim
+        super(ComposicaoMesa, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = _('Ocupação de cargo na Mesa')
