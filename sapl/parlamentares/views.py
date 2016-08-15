@@ -185,9 +185,19 @@ class MesaDiretoraView(FormView):
                 not SessaoLegislativa.objects.all()):
             return self.validation(request)
 
-        mesa = SessaoLegislativa.objects.filter(
-            legislatura=Legislatura.objects.last()).first(
-        ).composicaomesa_set.all()
+        periodos = ComposicaoMesa.objects.filter(
+            sessao_legislativa=SessaoLegislativa.objects.filter(
+                legislatura=Legislatura.objects.last()).distinct(
+                    'data_inicio', 'data_fim'))
+
+        # mesa = SessaoLegislativa.objects.filter(
+        #     legislatura=Legislatura.objects.last()).first(
+        # ).composicaomesa_set.all().distinct(
+        #     'data_inicio', 'data_fim')
+
+        mesa = ComposicaoMesa.objects.filter(
+            sessao_legislativa=SessaoLegislativa.objects.filter(
+                legislatura=Legislatura.objects.last()))
 
         cargos_ocupados = [m.cargo for m in mesa]
         cargos = CargoMesa.objects.all()
@@ -210,7 +220,9 @@ class MesaDiretoraView(FormView):
                 legislatura=Legislatura.objects.last()).first(),
                 'composicao_mesa': mesa,
                 'parlamentares': parlamentares_vagos,
-                'cargos_vagos': cargos_vagos
+                'cargos_vagos': cargos_vagos,
+                'periodos': periodos,
+                'periodo_selecionado': periodos.last()
             })
 
     def post(self, request, *args, **kwargs):
@@ -228,10 +240,10 @@ class MesaDiretoraView(FormView):
             composicao.cargo = CargoMesa.objects.get(
                 id=int(request.POST['cargo']))
 
-            if 'data_inicio' in request.POST:
+            if request.POST['data_inicio']:
                 composicao.data_inicio = datetime.strptime(
                     request.POST['data_inicio'], '%d/%m/%Y')
-            if 'data_fim' in request.POST:
+            if request.POST['data_fim']:
                 composicao.data_inicio = datetime.strptime(
                     request.POST['data_fim'], '%d/%m/%Y')
 
@@ -258,6 +270,15 @@ class MesaDiretoraView(FormView):
             mesa = ComposicaoMesa.objects.filter(
                 sessao_legislativa=request.POST['sessao'])
 
+            periodos = ComposicaoMesa.objects.filter(
+                sessao_legislativa=SessaoLegislativa.objects.filter(
+                    id=int(request.POST['sessao'])).distinct(
+                        'data_inicio', 'data_fim'))
+
+            periodos_temp = ComposicaoMesa.objects.filter(
+                sessao_legislativa=SessaoLegislativa.objects.filter(
+                    id=int(request.POST['sessao']))).distinct()
+
             cargos_ocupados = [m.cargo for m in mesa]
             cargos = CargoMesa.objects.all()
             cargos_vagos = list(set(cargos) - set(cargos_ocupados))
@@ -269,6 +290,13 @@ class MesaDiretoraView(FormView):
                 set(
                     [p.parlamentar for p in parlamentares]) - set(
                     parlamentares_ocupados))
+
+            if 'periodo' in request.POST:
+                periodo_selecionado = ComposicaoMesa.objects.get(
+                    id=int(request.POST['periodo'])).id
+            else:
+                periodo_selecionado = 0
+
             return self.render_to_response(
                 {'legislaturas': Legislatura.objects.all(
                 ).order_by('-data_inicio'),
@@ -280,5 +308,7 @@ class MesaDiretoraView(FormView):
                     id=int(request.POST['sessao'])),
                     'composicao_mesa': mesa,
                     'parlamentares': parlamentares_vagos,
-                    'cargos_vagos': cargos_vagos
+                    'cargos_vagos': cargos_vagos,
+                    'periodos': periodos,
+                    'periodo_selecionado': periodo_selecionado
                 })

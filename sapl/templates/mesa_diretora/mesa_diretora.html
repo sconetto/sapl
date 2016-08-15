@@ -8,7 +8,7 @@
 		<fieldset class="form-group">
 			<legend>Escolha da Legislatura e da Sessão Legislativa</legend>
 	    <div class="row">
-	      <div class="col-md-6">
+	      <div class="col-md-4">
 	        <label>Escolha uma Legislatura</label>
 	        <select name="legislatura" class="form-control" onChange="form.submit();">
 	          {% for l in legislaturas %}
@@ -18,7 +18,7 @@
 	          {% endfor %}
 	        </select>
 	      </div>
-	      <div class="col-md-6">
+	      <div class="col-md-4">
 	        <label>Escolha uma Sessão Legislativa</label>
 	        <select name="sessao" class="form-control" onChange="form.submit();">
 	          {% for s in sessoes %}
@@ -28,6 +28,18 @@
 	          {% endfor %}
 	        </select>
 	      </div>
+				<div class="col-md-4">
+					<label>Escolha um Período</label>
+					<select name="periodo" class="form-control" onChange="form.submit();">
+						{% for p in periodos %}
+							{% if p.data_inicio != None and p.data_fim != None %}
+								<option value="{{p.id}}" {% if p == periodo_selecionado %} selected {% endif %}>
+									{{p.data_inicio}} - {{p.data_fim}}
+								</option>
+							{% endif %}
+						{% endfor %}
+					</select>
+				</div>
 	    </div>
 		</fieldset>
 		<br />
@@ -87,7 +99,7 @@
 			<div class="row">
 				<div class="col-md-12">
 					<p align="center"><b>
-						Preencher estes campos somente se a entrada ou saída do integrante da mesa for diferente da data da Sessão Legislativa
+						Preencher estes campos somente se a entrada do integrante da mesa for diferente da data da Sessão Legislativa
 					</b></p>
 				</div>
 			</div>
