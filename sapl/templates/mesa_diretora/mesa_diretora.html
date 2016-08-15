@@ -69,8 +69,28 @@
 	        </select>
 	      </div>
 	      {% endif %}
-
 	    </div>
+		</fieldset>
+
+		<fieldset>
+			<legend></legend>
+			<div class="row form-group">
+				<div class="col-md-6">
+					<label>Data de Entrada</label>
+					<input type="text" class="form-control dateinput" id="data_inicio" name="data_inicio" />
+				</div>
+				<div class="col-md-6">
+					<label>Data de Saída</label>
+					<input type="text" class="form-control dateinput" id="data_fim" name="data_fim" />
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-12">
+					<p align="center"><b>
+						Preencher estes campos somente se a entrada ou saída do integrante da mesa for diferente da data da Sessão Legislativa
+					</b></p>
+				</div>
+			</div>
 		</fieldset>
 	</form>
 {% endblock detail_content %}

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.contrib import messages
 from django.core.urlresolvers import reverse_lazy
 from django.shortcuts import redirect
@@ -225,6 +227,14 @@ class MesaDiretoraView(FormView):
                 id=int(request.POST['parlamentar']))
             composicao.cargo = CargoMesa.objects.get(
                 id=int(request.POST['cargo']))
+
+            if 'data_inicio' in request.POST:
+                composicao.data_inicio = datetime.strptime(
+                    request.POST['data_inicio'], '%d/%m/%Y')
+            if 'data_fim' in request.POST:
+                composicao.data_inicio = datetime.strptime(
+                    request.POST['data_fim'], '%d/%m/%Y')
+
             composicao.save()
 
             return redirect('sapl.parlamentares:mesa_diretora')

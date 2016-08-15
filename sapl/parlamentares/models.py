@@ -402,6 +402,7 @@ class ComposicaoMesa(models.Model):
     def save(self, *args, **kwargs):
         if not self.data_inicio:
             self.data_inicio = self.sessao_legislativa.data_inicio
+
         if not self.data_fim:
             self.data_fim = self.sessao_legislativa.data_fim
         super(ComposicaoMesa, self).save(*args, **kwargs)
