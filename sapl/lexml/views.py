@@ -22,8 +22,9 @@ class LexmlPesquisarView(FormView):
         context = self.get_context_data(**kwargs)
         form = PesquisaLexmlForm(request.POST)
 
+        pesquisa = form.data['conteudo'].replace(' ', '+')
         url = 'http://www.lexml.gov.br/busca/search?keyword='
-        url += form.data['conteudo']
+        url += pesquisa
 
         context['url'] = url
         return self.render_to_response(context)
