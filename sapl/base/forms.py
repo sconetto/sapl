@@ -57,3 +57,21 @@ class LoginForm(AuthenticationForm):
         widget=forms.PasswordInput(
             attrs={
                 'class': 'form-control', 'name': 'password'}))
+
+
+class RecuperarSenhaEmailForm(PasswordResetForm):
+
+    def __init__(self, *args, **kwargs):
+        super(RecuperarSenhaEmailForm, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        email_existente_usuario = User.objects.filter(
+            email=self.data['email'])
+        email_existente_user = User.objects.filter(
+            email=self.data['email'])
+
+        if not email_existente_usuario and not email_existente_user:
+            msg = 'Não existe nenhum usuário cadastrado com este e-mail.'
+            raise ValidationError(msg)
+
+return self.cleaned_data
