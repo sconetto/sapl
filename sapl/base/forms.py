@@ -1,8 +1,15 @@
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Fieldset, Layout
+
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import (AuthenticationForm, PasswordResetForm,
+                                       SetPasswordForm)
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
+from django.utils.translation import ugettext_lazy as _
 
+from sapl.crispy_layout_mixin import form_actions, to_row
 from sapl.settings import MAX_IMAGE_UPLOAD_SIZE
 from sapl.utils import ImageThumbnailFileInput
 
@@ -33,7 +40,7 @@ class CasaLegislativaForm(ModelForm):
             'cep': forms.TextInput(attrs={'class': 'cep'}),
             'telefone': forms.TextInput(attrs={'class': 'telefone'}),
             'fax': forms.TextInput(attrs={'class': 'telefone'}),
-            'logotipo':  ImageThumbnailFileInput,
+            'logotipo': ImageThumbnailFileInput,
             'informacao_geral': forms.Textarea(
                 attrs={'id': 'texto-rico'})
         }
@@ -64,6 +71,16 @@ class RecuperarSenhaEmailForm(PasswordResetForm):
     def __init__(self, *args, **kwargs):
         super(RecuperarSenhaEmailForm, self).__init__(*args, **kwargs)
 
+        row1 = to_row(
+            [('email', 12)])
+
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Fieldset(_('Insira seu e-mail cadastrado'),
+                     row1,
+                     form_actions(save_label='Enviar'))
+        )
+
     def clean(self):
         email_existente_usuario = User.objects.filter(
             email=self.data['email'])
@@ -74,4 +91,21 @@ class RecuperarSenhaEmailForm(PasswordResetForm):
             msg = 'Não existe nenhum usuário cadastrado com este e-mail.'
             raise ValidationError(msg)
 
-return self.cleaned_data
+        return self.cleaned_data
+
+
+class RedefineSenhaForm(SetPasswordForm):
+
+    def __init__(self, *args, **kwargs):
+        super(RedefineSenhaForm, self).__init__(*args, **kwargs)
+
+        row1 = to_row(
+            [('new_password1', 6),
+             ('new_password2', 6)])
+
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Fieldset(_('Insira sua nova senha'),
+                     row1,
+                     form_actions(save_label='Enviar'))
+        )
