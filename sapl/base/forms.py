@@ -88,7 +88,7 @@ class RecuperarSenhaEmailForm(PasswordResetForm):
             email=self.data['email'])
 
         if not email_existente_usuario and not email_existente_user:
-            msg = 'Não existe nenhum usuário cadastrado com este e-mail.'
+            msg = _('Não existe nenhum usuário cadastrado com este e-mail.')
             raise ValidationError(msg)
 
         return self.cleaned_data
