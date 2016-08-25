@@ -98,6 +98,7 @@ class RedefineSenhaForm(SetPasswordForm):
 
     def __init__(self, *args, **kwargs):
         super(RedefineSenhaForm, self).__init__(*args, **kwargs)
+        self.fields['new_password1'].help_text = ''
 
         row1 = to_row(
             [('new_password1', 6),

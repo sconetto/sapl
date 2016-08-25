@@ -200,3 +200,19 @@ LOGGING = SUPRESS_CRISPY_FORM_WARNINGS_LOGGING
 
 # suprime texto de ajuda default do django-filter
 FILTERS_HELP_TEXT_FILTER = False
+
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
