@@ -3,13 +3,16 @@ from datetime import datetime
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.shortcuts import redirect
 from django.views.generic import FormView, ListView
+from django.utils.translation import ugettext_lazy as _
+
+from django_filters.views import FilterView
 
 from sapl.compilacao.views import IntegracaoTaView
 from sapl.crud.base import (Crud, CrudBaseMixin, CrudCreateView,
                             CrudDeleteView, CrudUpdateView, make_pagination)
 from sapl.utils import permissoes_norma
 
-from .forms import NormaJuridicaForm, NormaJuridicaPesquisaForm
+from .forms import NormaJuridicaForm, NormaJuridicaFilterSet
 from .models import (AssuntoNorma, LegislacaoCitada, NormaJuridica,
                      TipoNormaJuridica)
 
@@ -69,93 +72,45 @@ class NormaCrud(Crud):
         list_field_names = ['tipo', 'numero', 'ano', 'ementa']
 
 
-class NormaPesquisaView(FormView):
-    template_name = "norma/pesquisa.html"
-    success_url = "norma:norma_pesquisa"
-    form_class = NormaJuridicaPesquisaForm
-
-    def post(self, request, *args, **kwargs):
-        form = NormaJuridicaPesquisaForm(request.POST)
-
-        if form.data['tipo']:
-            kwargs['tipo'] = form.data['tipo']
-        if form.data['numero']:
-            kwargs['numero'] = form.data['numero']
-        if form.data['ano']:
-            kwargs['ano'] = form.data['ano']
-        if form.data['periodo_inicial'] and form.data['periodo_final']:
-            kwargs['periodo_inicial'] = form.data['periodo_inicial']
-            kwargs['periodo_final'] = form.data['periodo_final']
-        if form.data['publicacao_inicial'] and form.data['publicacao_final']:
-            kwargs['publicacao_inicial'] = form.data['publicacao_inicial']
-            kwargs['publicacao_final'] = form.data['publicacao_final']
-
-        request.session['kwargs'] = kwargs
-        return redirect('sapl.norma:list_pesquisa_norma')
-
-
-class PesquisaNormaListView(ListView):
-    template_name = 'norma/list_pesquisa.html'
+class PesquisaNormaJuridicaView(FilterView):
     model = NormaJuridica
+    filterset_class = NormaJuridicaFilterSet
     paginate_by = 10
 
-    def get_queryset(self):
-        kwargs = self.request.session['kwargs']
-        normas = NormaJuridica.objects.all().order_by('-ano', '-numero')
+    def get_filterset_kwargs(self, filterset_class):
+        super(PesquisaNormaJuridicaView,
+              self).get_filterset_kwargs(filterset_class)
 
-        if 'periodo_inicial' and 'publicacao_inicial' in kwargs:
-            periodo_inicial = datetime.strptime(
-                kwargs['periodo_inicial'],
-                '%d/%m/%Y').strftime('%Y-%m-%d')
-            periodo_final = datetime.strptime(
-                kwargs['periodo_final'],
-                '%d/%m/%Y').strftime('%Y-%m-%d')
-            publicacao_inicial = datetime.strptime(
-                kwargs['publicacao_inicial'],
-                '%d/%m/%Y').strftime('%Y-%m-%d')
-            publicacao_final = datetime.strptime(
-                kwargs['publicacao_final'],
-                '%d/%m/%Y').strftime('%Y-%m-%d')
+        kwargs = {'data': self.request.GET or None}
 
-            normas = normas.filter(
-                data__range=(periodo_inicial, periodo_final),
-                data_publicacao__range=(publicacao_inicial, publicacao_final))
+        qs = self.get_queryset()
 
-        if 'periodo_inicial' in kwargs:
-            inicial = datetime.strptime(kwargs['periodo_inicial'],
-                                        '%d/%m/%Y').strftime('%Y-%m-%d')
-            final = datetime.strptime(kwargs['periodo_inicial'],
-                                      '%d/%m/%Y').strftime('%Y-%m-%d')
+        # if vigencia
+        # TODO
 
-            normas = normas.filter(data__range=(inicial, final))
-
-        if 'publicacao_inicial' in kwargs:
-            inicial = datetime.strptime(kwargs['publicacao_inicial'],
-                                        '%d/%m/%Y').strftime('%Y-%m-%d')
-            final = datetime.strptime(kwargs['publicacao_final'],
-                                      '%d/%m/%Y').strftime('%Y-%m-%d')
-
-            normas = normas.filter(data_publicacao__range=(inicial, final))
-        if 'tipo' in kwargs:
-            normas = normas.filter(tipo=kwargs['tipo'])
-
-        if 'numero' in kwargs:
-            normas = normas.filter(numero=kwargs['numero'])
-
-        if 'ano' in kwargs:
-            normas = normas.filter(ano=kwargs['ano'])
-
-        return normas
+        kwargs.update({
+            'queryset': qs,
+        })
+        return kwargs
 
     def get_context_data(self, **kwargs):
-        context = super(PesquisaNormaListView, self).get_context_data(
-            **kwargs)
+        context = super(PesquisaNormaJuridicaView,
+                        self).get_context_data(**kwargs)
+
+        context['title'] = _('Pesquisar Norma Jurídica')
 
         paginator = context['paginator']
         page_obj = context['page_obj']
-
         context['page_range'] = make_pagination(
             page_obj.number, paginator.num_pages)
+
+        self.filterset.form.fields['o'].label = _('Ordenação')
+
+        qr = self.request.GET.copy()
+        if 'page' in qr:
+            del qr['page']
+        context['filter_url'] = ('&' + qr.urlencode()) if len(qr) > 0 else ''
+
         return context
 
 
