@@ -100,8 +100,8 @@ class ProposicaoForm(ModelForm):
             return texto_original
 
     def clean_data_envio(self):
-        data_envio = self.cleaned_data.get('data_envio')
-        if (not data_envio) and bool(self.initial):
+        data_envio = self.cleaned_data.get('data_envio') or None
+        if (not data_envio) and len(self.initial) > 1:
             data_envio = datetime.now()
         return data_envio
 
@@ -111,8 +111,6 @@ class ProposicaoForm(ModelForm):
             if cleaned_data['tipo'].descricao == 'Parecer':
                 if self.instance.materia:
                     cleaned_data['materia'] = self.instance.materia
-                    cleaned_data['autor'] = (
-                        self.instance.materia.autoria_set.first().autor)
                 else:
                     try:
                         materia = MateriaLegislativa.objects.get(
@@ -124,9 +122,6 @@ class ProposicaoForm(ModelForm):
                         raise ValidationError(msg)
                     else:
                         cleaned_data['materia'] = materia
-                        cleaned_data['autor'] = materia.autoria_set.first(
-                            ).autor
-
         return cleaned_data
 
     def save(self, commit=False):
@@ -221,20 +216,89 @@ class TramitacaoForm(ModelForm):
                   'texto']
 
     def clean(self):
+
+        if 'data_encaminhamento' in self.data:
+            data_enc_form = self.cleaned_data['data_encaminhamento']
+        if 'data_fim_prazo' in self.data:
+            data_prazo_form = self.cleaned_data['data_fim_prazo']
+        if 'data_tramitacao' in self.data:
+            data_tram_form = self.cleaned_data['data_tramitacao']
+
         if self.errors:
             return self.errors
 
         ultima_tramitacao = Tramitacao.objects.filter(
-            materia_id=self.instance.materia.id).last()
+            materia_id=self.instance.materia_id).exclude(
+            id=self.instance.id).last()
 
-        if ultima_tramitacao:
-            destino = ultima_tramitacao.unidade_tramitacao_destino
-            if (destino != self.cleaned_data['unidade_tramitacao_local']):
-                msg = _('A origem da nova tramitação deve ser igual ao '
-                        'destino  da última adicionada!')
+        if not self.instance.data_tramitacao:
+
+            if ultima_tramitacao:
+                destino = ultima_tramitacao.unidade_tramitacao_destino
+                if (destino != self.cleaned_data['unidade_tramitacao_local']):
+                    msg = _('A origem da nova tramitação deve ser igual ao '
+                            'destino  da última adicionada!')
+                    raise ValidationError(msg)
+
+            if self.cleaned_data['data_tramitacao'] > datetime.now().date():
+                msg = _(
+                    'A data de tramitação deve ser ' +
+                    'menor ou igual a data de hoje!')
+                raise ValidationError(msg)
+
+            if (ultima_tramitacao and
+               data_tram_form < ultima_tramitacao.data_tramitacao):
+                msg = _('A data da nova tramitação deve ser ' +
+                        'maior que a data da última tramitação!')
+                raise ValidationError(msg)
+
+        if data_enc_form:
+            if data_enc_form < data_tram_form:
+                msg = _('A data de encaminhamento deve ser ' +
+                        'maior que a data de tramitação!')
+                raise ValidationError(msg)
+
+        if data_prazo_form:
+            if data_prazo_form < data_tram_form:
+                msg = _('A data fim de prazo deve ser ' +
+                        'maior que a data de tramitação!')
                 raise ValidationError(msg)
 
         return self.cleaned_data
+
+
+class TramitacaoUpdateForm(TramitacaoForm):
+    unidade_tramitacao_local = forms.ModelChoiceField(
+        queryset=UnidadeTramitacao.objects.all(),
+        widget=forms.HiddenInput())
+
+    data_tramitacao = forms.DateField(widget=forms.HiddenInput())
+
+    class Meta:
+        model = Tramitacao
+        fields = ['data_tramitacao',
+                  'unidade_tramitacao_local',
+                  'status',
+                  'turno',
+                  'urgente',
+                  'unidade_tramitacao_destino',
+                  'data_encaminhamento',
+                  'data_fim_prazo',
+                  'texto',
+                  ]
+
+        widgets = {
+            'data_encaminhamento': forms.DateInput(format='%d/%m/%Y'),
+            'data_fim_prazo': forms.DateInput(format='%d/%m/%Y'),
+        }
+
+    def clean(self):
+        local = self.instance.unidade_tramitacao_local
+        data_tram = self.instance.data_tramitacao
+
+        self.cleaned_data['data_tramitacao'] = data_tram
+        self.cleaned_data['unidade_tramitacao_local'] = local
+        return super(TramitacaoUpdateForm, self).clean()
 
 
 class LegislacaoCitadaForm(ModelForm):
@@ -602,6 +666,11 @@ class AutorForm(ModelForm):
         required=True,
         label=_('Confirmar Email'))
 
+    username = forms.CharField(
+        required=True,
+        max_length=50
+    )
+
     class Meta:
         model = Autor
         fields = ['username',
@@ -669,10 +738,16 @@ class AutorForm(ModelForm):
 
         autor = super(AutorForm, self).save(commit)
 
-        u = User.objects.get_or_create(
-            username=autor.username,
-            email=autor.email)
-        u = u[0]
+        try:
+            u = User.objects.get(
+                username=autor.username,
+                email=autor.email)
+        except ObjectDoesNotExist:
+            msg = _('Este nome de usuario não está cadastrado. ' +
+                    'Por favor, cadastre-o no Administrador do ' +
+                    'Sistema antes de adicioná-lo como Autor')
+            raise ValidationError(msg)
+
         u.set_password(self.cleaned_data['senha'])
         u.is_active = False
         u.save()
@@ -685,3 +760,105 @@ class AutorForm(ModelForm):
         u.groups.add(grupo)
 
         return autor
+
+
+class AcessorioEmLoteFilterSet(django_filters.FilterSet):
+
+    filter_overrides = {models.DateField: {
+        'filter_class': django_filters.DateFromToRangeFilter,
+        'extra': lambda f: {
+            'label': '%s (%s)' % (f.verbose_name, _('Inicial - Final')),
+            'widget': RangeWidgetOverride}
+    }}
+
+    class Meta:
+        model = MateriaLegislativa
+        fields = ['tipo', 'data_apresentacao']
+
+    def __init__(self, *args, **kwargs):
+        super(AcessorioEmLoteFilterSet, self).__init__(*args, **kwargs)
+
+        self.filters['tipo'].label = 'Tipo de Matéria'
+        self.filters['data_apresentacao'].label = 'Data (Inicial - Final)'
+        self.form.fields['tipo'].required = True
+        self.form.fields['data_apresentacao'].required = True
+
+        row1 = to_row([('tipo', 12)])
+        row2 = to_row([('data_apresentacao', 12)])
+
+        self.form.helper = FormHelper()
+        self.form.helper.form_method = 'GET'
+        self.form.helper.layout = Layout(
+            Fieldset(_('Documentos Acessórios em Lote'),
+                     row1, row2, form_actions(save_label='Pesquisar')))
+
+
+class PrimeiraTramitacaoEmLoteFilterSet(django_filters.FilterSet):
+
+    filter_overrides = {models.DateField: {
+        'filter_class': django_filters.DateFromToRangeFilter,
+        'extra': lambda f: {
+            'label': '%s (%s)' % (f.verbose_name, _('Inicial - Final')),
+            'widget': RangeWidgetOverride}
+    }}
+
+    class Meta:
+        model = MateriaLegislativa
+        fields = ['tipo', 'data_apresentacao']
+
+    def __init__(self, *args, **kwargs):
+        super(PrimeiraTramitacaoEmLoteFilterSet, self).__init__(
+            *args, **kwargs)
+
+        self.filters['tipo'].label = 'Tipo de Matéria'
+        self.filters['data_apresentacao'].label = 'Data (Inicial - Final)'
+        self.form.fields['tipo'].required = True
+        self.form.fields['data_apresentacao'].required = True
+
+        row1 = to_row([('tipo', 12)])
+        row2 = to_row([('data_apresentacao', 12)])
+
+        self.form.helper = FormHelper()
+        self.form.helper.form_method = 'GET'
+        self.form.helper.layout = Layout(
+            Fieldset(_('Primeira Tramitação'),
+                     row1, row2, form_actions(save_label='Pesquisar')))
+
+
+class TramitacaoEmLoteFilterSet(django_filters.FilterSet):
+
+    filter_overrides = {models.DateField: {
+        'filter_class': django_filters.DateFromToRangeFilter,
+        'extra': lambda f: {
+            'label': '%s (%s)' % (f.verbose_name, _('Inicial - Final')),
+            'widget': RangeWidgetOverride}
+    }}
+
+    class Meta:
+        model = MateriaLegislativa
+        fields = ['tipo', 'data_apresentacao',
+                  'tramitacao__unidade_tramitacao_local', 'tramitacao__status']
+
+    def __init__(self, *args, **kwargs):
+        super(TramitacaoEmLoteFilterSet, self).__init__(
+            *args, **kwargs)
+
+        self.filters['tipo'].label = 'Tipo de Matéria'
+        self.filters['data_apresentacao'].label = 'Data (Inicial - Final)'
+        self.form.fields['tipo'].required = True
+        self.form.fields['data_apresentacao'].required = True
+        self.form.fields['tramitacao__status'].required = True
+        self.form.fields[
+            'tramitacao__unidade_tramitacao_local'].required = True
+
+        row1 = to_row([
+            ('tipo', 4),
+            ('tramitacao__unidade_tramitacao_local', 4),
+            ('tramitacao__status', 4)])
+        row2 = to_row([('data_apresentacao', 12)])
+
+        self.form.helper = FormHelper()
+        self.form.helper.form_method = 'GET'
+        self.form.helper.layout = Layout(
+            Fieldset(_('Tramitação em Lote'),
+                     row1, row2, form_actions(save_label='Pesquisar')))

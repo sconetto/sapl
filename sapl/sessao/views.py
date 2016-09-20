@@ -10,7 +10,7 @@ from django.http.response import HttpResponseRedirect
 from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.html import strip_tags
 from django.utils.translation import ugettext_lazy as _
-from django.views.generic import FormView, ListView, TemplateView
+from django.views.generic import ListView, TemplateView
 from django.views.generic.edit import FormMixin
 from django_filters.views import FilterView
 from rest_framework import generics
@@ -20,26 +20,24 @@ from sapl.crud.base import (Crud, CrudBaseMixin, CrudCreateView,
                             CrudUpdateView, make_pagination)
 from sapl.crud.masterdetail import MasterDetailCrud
 from sapl.materia.forms import pega_ultima_tramitacao
-from sapl.materia.models import (Autoria, DocumentoAcessorio,
-                                 TipoMateriaLegislativa, Tramitacao)
+from sapl.materia.models import Autoria, DocumentoAcessorio, Tramitacao
 from sapl.materia.views import MateriaLegislativaPesquisaView
 from sapl.norma.models import NormaJuridica
 from sapl.parlamentares.models import Parlamentar
 from sapl.sessao.serializers import SessaoPlenariaSerializer
 from sapl.utils import permissao_tb_aux, permissoes_painel, permissoes_sessao
 
-from .forms import (AdicionarVariasMateriasFilterSet,
-                    BancadaForm, ExpedienteForm, ExpedienteMateriaForm,
-                    ListMateriaForm, MesaForm,
-                    OrdemDiaForm, PresencaForm,
+from .forms import (AdicionarVariasMateriasFilterSet, BancadaForm,
+                    ExpedienteForm, ExpedienteMateriaForm, ListMateriaForm,
+                    MesaForm, OrdemDiaForm, PresencaForm,
                     SessaoPlenariaFilterSet, VotacaoEditForm, VotacaoForm,
                     VotacaoNominalForm)
-from .models import (Bancada, CargoBancada, CargoMesa, ExpedienteMateria,
-                     ExpedienteSessao, IntegranteMesa, MateriaLegislativa,
-                     Orador, OradorExpediente, OrdemDia, PresencaOrdemDia,
-                     RegistroVotacao, SessaoPlenaria, SessaoPlenariaPresenca,
-                     TipoExpediente, TipoResultadoVotacao, TipoSessaoPlenaria,
-                     VotoParlamentar)
+from .models import (Bancada, Bloco, CargoBancada, CargoMesa,
+                     ExpedienteMateria, ExpedienteSessao, IntegranteMesa,
+                     MateriaLegislativa, Orador, OradorExpediente, OrdemDia,
+                     PresencaOrdemDia, RegistroVotacao, SessaoPlenaria,
+                     SessaoPlenariaPresenca, TipoExpediente,
+                     TipoResultadoVotacao, TipoSessaoPlenaria, VotoParlamentar)
 
 OrdemDiaCrud = Crud.build(OrdemDia, '')
 RegistroVotacaoCrud = Crud.build(RegistroVotacao, '')
@@ -69,6 +67,17 @@ def reordernar_materias_ordem(request, pk):
 
     return HttpResponseRedirect(
         reverse('sapl.sessao:ordemdia_list', kwargs={'pk': pk}))
+
+
+class BlocoCrud(Crud):
+    model = Bloco
+    help_path = ''
+
+    class BaseMixin(PermissionRequiredMixin, CrudBaseMixin):
+        list_field_names = ['nome', 'data_criacao', 'partidos']
+
+        def has_permission(self):
+            return permissao_tb_aux(self)
 
 
 class BancadaCrud(Crud):
@@ -211,43 +220,54 @@ class MateriaOrdemDiaCrud(MasterDetailCrud):
                                               'pk': obj.sessao_plenaria_id,
                                               'oid': obj.materia_id,
                                               'mid': obj.pk})
-
-                        btn_registrar = '''
-                            <a href="%s"
-                               class="btn btn-primary"
-                               role="button">Registrar Votação</a>''' % (url)
-                        obj.resultado = btn_registrar
+                        if self.request.user.has_perms(permissoes_sessao()):
+                            btn_registrar = '''
+                                <a href="%s"
+                                   class="btn btn-primary"
+                                   role="button">Registrar Votação</a>''' % (
+                                url)
+                            obj.resultado = btn_registrar
+                        else:
+                            obj.resultado = '''Não há resultado'''
                     else:
                         url = reverse('sapl.sessao:abrir_votacao', kwargs={
                             'pk': obj.pk, 'spk': obj.sessao_plenaria_id})
-                        btn_abrir = '''
-                            Matéria não votada<br />
-                            <a href="%s"
-                               class="btn btn-primary"
-                               role="button">Abrir Votação</a>''' % (url)
-                        obj.resultado = btn_abrir
+
+                        if self.request.user.has_perms(permissoes_sessao()):
+                            btn_abrir = '''
+                                Matéria não votada<br />
+                                <a href="%s"
+                                   class="btn btn-primary"
+                                   role="button">Abrir Votação</a>''' % (url)
+                            obj.resultado = btn_abrir
+                        else:
+                            obj.resultado = '''Não há resultado'''
                 else:
-                    url = ''
-                    if obj.tipo_votacao == 1:
-                        url = reverse('sapl.sessao:votacaosimbolicaedit',
-                                      kwargs={
-                                          'pk': obj.sessao_plenaria_id,
-                                          'oid': obj.materia_id,
-                                          'mid': obj.pk})
-                    elif obj.tipo_votacao == 2:
-                        url = reverse('sapl.sessao:votacaonominaledit',
-                                      kwargs={
-                                          'pk': obj.sessao_plenaria_id,
-                                          'oid': obj.materia_id,
-                                          'mid': obj.pk})
-                    elif obj.tipo_votacao == 3:
-                        url = reverse('sapl.sessao:votacaosecretaedit',
-                                      kwargs={
-                                          'pk': obj.sessao_plenaria_id,
-                                          'oid': obj.materia_id,
-                                          'mid': obj.pk})
-                    obj.resultado = '<a href="%s">%s</a>' % (url,
-                                                             obj.resultado)
+                    if self.request.user.has_perms(permissoes_sessao()):
+                        url = ''
+                        if obj.tipo_votacao == 1:
+                            url = reverse('sapl.sessao:votacaosimbolicaedit',
+                                          kwargs={
+                                              'pk': obj.sessao_plenaria_id,
+                                              'oid': obj.materia_id,
+                                              'mid': obj.pk})
+                        elif obj.tipo_votacao == 2:
+                            url = reverse('sapl.sessao:votacaonominaledit',
+                                          kwargs={
+                                              'pk': obj.sessao_plenaria_id,
+                                              'oid': obj.materia_id,
+                                              'mid': obj.pk})
+                        elif obj.tipo_votacao == 3:
+                            url = reverse('sapl.sessao:votacaosecretaedit',
+                                          kwargs={
+                                              'pk': obj.sessao_plenaria_id,
+                                              'oid': obj.materia_id,
+                                              'mid': obj.pk})
+                        obj.resultado = '<a href="%s">%s</a>' % (url,
+                                                                 obj.resultado)
+                    else:
+                        obj.resultado = '%s' % (obj.resultado)
+
             return [self._as_row(obj) for obj in object_list]
 
 
@@ -422,7 +442,7 @@ class SessaoCrud(Crud):
 
 class PresencaMixin:
 
-    def get_parlamentares(self):
+    def get_presencas(self):
         self.object = self.get_object()
 
         presencas = SessaoPlenariaPresenca.objects.filter(
@@ -436,19 +456,34 @@ class PresencaMixin:
             else:
                 yield (parlamentar, False)
 
+    def get_presencas_ordem(self):
+        self.object = self.get_object()
 
-class PresencaView(PermissionRequiredMixin,
-                   FormMixin,
+        presencas = PresencaOrdemDia.objects.filter(
+            sessao_plenaria_id=self.object.id
+        )
+        presentes = [p.parlamentar for p in presencas]
+
+        for parlamentar in Parlamentar.objects.filter(ativo=True):
+            if parlamentar in presentes:
+                yield (parlamentar, True)
+            else:
+                yield (parlamentar, False)
+
+
+class PresencaView(FormMixin,
                    PresencaMixin,
                    SessaoCrud.CrudDetailView):
     template_name = 'sessao/presenca.html'
     form_class = PresencaForm
     model = SessaoPlenaria
-    permission_required = permissoes_sessao()
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         form = self.get_form()
+
+        if not self.request.user.has_perms(permissoes_sessao()):
+            return self.form_invalid(form)
 
         if form.is_valid():
             # Pegar os presentes salvos no banco
@@ -487,13 +522,11 @@ class PainelView(PermissionRequiredMixin, TemplateView):
     permission_required = permissoes_painel()
 
 
-class PresencaOrdemDiaView(PermissionRequiredMixin,
-                           FormMixin,
+class PresencaOrdemDiaView(FormMixin,
                            PresencaMixin,
                            SessaoCrud.CrudDetailView):
     template_name = 'sessao/presenca_ordemdia.html'
     form_class = PresencaForm
-    permission_required = permissoes_sessao()
 
     def post(self, request, *args, **kwargs):
 
@@ -501,6 +534,9 @@ class PresencaOrdemDiaView(PermissionRequiredMixin,
         form = self.get_form()
 
         pk = kwargs['pk']
+
+        if not self.request.user.has_perms(permissoes_sessao()):
+            return self.form_invalid(form)
 
         if form.is_valid():
             # Pegar os presentes salvos no banco
@@ -908,16 +944,17 @@ class ResumoView(SessaoCrud.CrudDetailView):
         return self.render_to_response(context)
 
 
-class ExpedienteView(PermissionRequiredMixin,
-                     FormMixin,
+class ExpedienteView(FormMixin,
                      SessaoCrud.CrudDetailView):
     template_name = 'sessao/expediente.html'
     form_class = ExpedienteForm
-    permission_required = permissoes_sessao()
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         form = ExpedienteForm(request.POST)
+
+        if not self.request.user.has_perms(permissoes_sessao()):
+            return self.form_invalid(form)
 
         if form.is_valid():
             list_tipo = request.POST.getlist('tipo')
@@ -1974,7 +2011,8 @@ class PesquisarSessaoPlenariaView(FilterView):
 
         qs = self.get_queryset()
 
-        qs = qs.distinct()
+        qs = qs.distinct().order_by(
+            'legislatura__id', 'data_inicio', 'numero')
 
         kwargs.update({
             'queryset': qs,
@@ -2033,9 +2071,11 @@ def retira_materias_ja_adicionadas(id_sessao, model):
     return lista_id_materias
 
 
-class AdicionarVariasMateriasExpediente(MateriaLegislativaPesquisaView):
+class AdicionarVariasMateriasExpediente(PermissionRequiredMixin,
+                                        MateriaLegislativaPesquisaView):
     filterset_class = AdicionarVariasMateriasFilterSet
     template_name = 'sessao/adicionar_varias_materias_expediente.html'
+    permission_required = permissoes_sessao()
 
     def get_filterset_kwargs(self, filterset_class):
         super(AdicionarVariasMateriasExpediente,
@@ -2059,7 +2099,6 @@ class AdicionarVariasMateriasExpediente(MateriaLegislativaPesquisaView):
         return kwargs
 
     def get_context_data(self, **kwargs):
-        # import ipdb; ipdb.set_trace()
         context = super(MateriaLegislativaPesquisaView,
                         self).get_context_data(**kwargs)
 
@@ -2112,6 +2151,7 @@ class AdicionarVariasMateriasExpediente(MateriaLegislativaPesquisaView):
 class AdicionarVariasMateriasOrdemDia(AdicionarVariasMateriasExpediente):
     filterset_class = AdicionarVariasMateriasFilterSet
     template_name = 'sessao/adicionar_varias_materias_ordem.html'
+    permission_required = permissoes_sessao()
 
     def get_filterset_kwargs(self, filterset_class):
         super(AdicionarVariasMateriasExpediente,

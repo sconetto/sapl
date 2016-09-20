@@ -3,9 +3,6 @@
 {% load crispy_forms_tags %}
 
 {% block detail_content %}
-<fieldset>
-	<legend>Resumo</legend>
-
 	<fieldset>
 		<legend>Identificação Básica</legend>
     <div class="row">
@@ -14,6 +11,7 @@
       {% endfor %}
     </div>
 	</fieldset>
+	<br /><br /><br />
 
 	<fieldset>
 		<legend>Conteúdo Multimídia</legend>
@@ -22,6 +20,7 @@
       <div class="col-md-6">{{multimidia_video}}</div>
     </div>
 	</fieldset>
+	<br /><br /><br />
 
 	<fieldset>
 		<legend>Mesa Diretora</legend>
@@ -31,6 +30,7 @@
       {% endfor %}
     </div>
 	</fieldset>
+	<br /><br /><br />
 
 	<fieldset>
 		<legend>Lista de Presença na Sessão</legend>
@@ -40,19 +40,24 @@
       {% endfor %}
     </div>
 	</fieldset>
+	<br /><br /><br />
 
 	<fieldset>
 		<legend>Expedientes</legend>
-    <div class="row">
-      {% for e in expedientes %}
-      <div class="col-md-12">
-        <b>{{e.tipo}}:</b>
-        <br />
-        {{e.conteudo|safe}}
-      </div>
-      {% endfor %}
-    </div>
+		<table class="table">
+			<thead class="thead-default">
+				{% for e in expedientes %}
+					<tr>
+						<td>
+							<b>{{e.tipo}}: </b> <br />
+							<textarea name="ementa" class="textarea form-control" cols="40" rows="10" readonly="readonly">{{e.conteudo}}</textarea>
+						</td>
+					</tr>
+				{% endfor %}
+			</thead>
+		</table>
 	</fieldset>
+	<br /><br /><br />
 
 	<fieldset>
 		<legend>Matérias do Expediente</legend>
@@ -73,6 +78,7 @@
       {% endfor %}
     </div>
 	</fieldset>
+	<br /><br /><br />
 
 	<fieldset>
 		<legend>Oradores do Expediente</legend>
@@ -87,6 +93,7 @@
       {% endfor %}
     </div>
 	</fieldset>
+	<br /><br /><br />
 
 	<fieldset>
 		<legend>Lista de Presença na Ordem do Dia</legend>
@@ -96,6 +103,7 @@
       {% endfor %}
     </div>
 	</fieldset>
+	<br /><br /><br />
 
 	<fieldset>
 		<legend>Matérias da Ordem do Dia</legend>
@@ -116,6 +124,4 @@
       {% endfor %}
     </div>
 	</fieldset>
-
-</fieldset>
 {% endblock detail_content %}

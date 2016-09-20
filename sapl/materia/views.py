@@ -12,14 +12,14 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
+from django.db.models import Q
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.template import Context, loader
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.translation import ugettext_lazy as _
-from django.views.generic import (CreateView, DetailView, ListView,
-                                  TemplateView, UpdateView)
+from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 from django_filters.views import FilterView
 
 from sapl.base.models import CasaLegislativa
@@ -30,16 +30,21 @@ from sapl.crud.base import (Crud, CrudBaseMixin, CrudCreateView,
                             CrudUpdateView, make_pagination)
 from sapl.crud.masterdetail import MasterDetailCrud
 from sapl.norma.models import LegislacaoCitada
-from sapl.utils import (autor_label, autor_modal, gerar_hash_arquivo,
-                        get_base_url, permissao_tb_aux, permissoes_autor,
-                        permissoes_materia)
+from sapl.utils import (TURNO_TRAMITACAO_CHOICES, YES_NO_CHOICES, autor_label,
+                        autor_modal, gerar_hash_arquivo, get_base_url,
+                        permissao_tb_aux, permissoes_autor, permissoes_materia,
+                        permissoes_protocoloadm)
 
-from .forms import (AcompanhamentoMateriaForm, AnexadaForm, AutorForm,
-                    AutoriaForm, ConfirmarProposicaoForm, DespachoInicialForm,
+from .forms import (AcessorioEmLoteFilterSet, AcompanhamentoMateriaForm,
+                    AnexadaForm, AutorForm, AutoriaForm,
+                    ConfirmarProposicaoForm, DespachoInicialForm,
                     DocumentoAcessorioForm, LegislacaoCitadaForm,
-                    MateriaLegislativaFilterSet, NumeracaoForm, ProposicaoForm,
-                    ReceberProposicaoForm, RelatoriaForm, TramitacaoForm,
-                    UnidadeTramitacaoForm, filtra_tramitacao_destino,
+                    MateriaLegislativaFilterSet, NumeracaoForm,
+                    PrimeiraTramitacaoEmLoteFilterSet, ProposicaoForm,
+                    ReceberProposicaoForm, RelatoriaForm,
+                    TramitacaoEmLoteFilterSet, TramitacaoForm,
+                    TramitacaoUpdateForm, UnidadeTramitacaoForm,
+                    filtra_tramitacao_destino,
                     filtra_tramitacao_destino_and_status,
                     filtra_tramitacao_status)
 from .models import (AcompanhamentoMateria, Anexada, Autor, Autoria,
@@ -243,11 +248,12 @@ class UnidadeTramitacaoCrud(Crud):
         permission_required = permissoes_materia()
 
 
-class ProposicaoDevolvida(ListView):
+class ProposicaoDevolvida(PermissionRequiredMixin, ListView):
     template_name = 'materia/prop_devolvidas_list.html'
     model = Proposicao
     ordering = ['data_envio']
     paginate_by = 10
+    permission_required = permissoes_protocoloadm()
 
     def get_queryset(self):
         return Proposicao.objects.filter(
@@ -265,11 +271,12 @@ class ProposicaoDevolvida(ListView):
         return context
 
 
-class ProposicaoPendente(ListView):
+class ProposicaoPendente(PermissionRequiredMixin, ListView):
     template_name = 'materia/prop_pendentes_list.html'
     model = Proposicao
     ordering = ['data_envio', 'autor', 'tipo', 'descricao']
     paginate_by = 10
+    permission_required = permissoes_protocoloadm()
 
     def get_queryset(self):
         return Proposicao.objects.filter(
@@ -287,11 +294,12 @@ class ProposicaoPendente(ListView):
         return context
 
 
-class ProposicaoRecebida(ListView):
+class ProposicaoRecebida(PermissionRequiredMixin, ListView):
     template_name = 'materia/prop_recebidas_list.html'
     model = Proposicao
     ordering = ['data_envio']
     paginate_by = 10
+    permission_required = permissoes_protocoloadm()
 
     def get_queryset(self):
         return Proposicao.objects.filter(
@@ -309,9 +317,10 @@ class ProposicaoRecebida(ListView):
         return context
 
 
-class ReceberProposicao(CreateView):
+class ReceberProposicao(PermissionRequiredMixin, CreateView):
     template_name = "materia/receber_proposicao.html"
     form_class = ReceberProposicaoForm
+    permission_required = permissoes_protocoloadm()
 
     def get_context_data(self, **kwargs):
         context = super(ReceberProposicao, self).get_context_data(**kwargs)
@@ -341,9 +350,10 @@ class ReceberProposicao(CreateView):
         return reverse('sapl.materia:receber-proposicao')
 
 
-class ConfirmarProposicao(CreateView):
+class ConfirmarProposicao(PermissionRequiredMixin, CreateView):
     template_name = "materia/confirmar_proposicao.html"
     form_class = ConfirmarProposicaoForm
+    permission_required = permissoes_protocoloadm()
 
     def get_context_data(self, **kwargs):
         context = super(ConfirmarProposicao, self).get_context_data(**kwargs)
@@ -397,12 +407,21 @@ class ProposicaoCrud(Crud):
 
         def get_initial(self):
             try:
-                autor_id = Autor.objects.get(user=self.request.user.id).id
+                autor_id = Autor.objects.get(user=self.request.user).id
             except MultipleObjectsReturned:
                 msg = _('Este usuário está relacionado a mais de um autor. ' +
                         'Operação cancelada')
                 messages.add_message(self.request, messages.ERROR, msg)
                 return redirect(self.get_success_url())
+            except ObjectDoesNotExist:
+                # FIXME: Pensar em uma melhor forma
+                tipo = TipoAutor.objects.get(name='Externo')
+
+                autor_id = Autor.objects.create(
+                    user=self.request.user,
+                    nome=str(self.request.user),
+                    tipo=tipo).id
+                return {'autor': autor_id}
             else:
                 return {'autor': autor_id}
 
@@ -410,58 +429,49 @@ class ProposicaoCrud(Crud):
         form_class = ProposicaoForm
         permission_required = permissoes_autor()
 
+        def get_initial(self):
+            initial = self.initial.copy()
+            if self.object.materia:
+                initial['tipo_materia'] = self.object.materia.tipo.id
+                initial['numero_materia'] = self.object.materia.numero
+                initial['ano_materia'] = self.object.materia.ano
+            return initial
+
         @property
         def layout_key(self):
             return 'ProposicaoCreate'
 
         def has_permission(self):
             perms = self.get_permission_required()
-            if self.request.user.has_perms(perms):
-                if (Proposicao.objects.filter(
-                   id=self.kwargs['pk'],
-                   autor__user_id=self.request.user.id).exists()):
-                    proposicao = Proposicao.objects.get(
-                        id=self.kwargs['pk'],
-                        autor__user_id=self.request.user.id)
-                    if not proposicao.data_recebimento:
-                        return True
-                    else:
-                        msg = _('Essa proposição já foi recebida. ' +
-                                'Não pode mais ser editada')
-                        messages.add_message(self.request, messages.ERROR, msg)
-                        return False
-            else:
+            if not self.request.user.has_perms(perms):
                 return False
+
+            if (Proposicao.objects.filter(
+               id=self.kwargs['pk'],
+               autor__user_id=self.request.user.id).exists()):
+                proposicao = Proposicao.objects.get(
+                    id=self.kwargs['pk'],
+                    autor__user_id=self.request.user.id)
+                if (not proposicao.data_recebimento or
+                   proposicao.data_devolucao):
+                    return True
+                else:
+                    msg = _('Essa proposição já foi recebida. ' +
+                            'Não pode mais ser editada')
+                    messages.add_message(self.request, messages.ERROR, msg)
+                    return False
 
     class DetailView(PermissionRequiredMixin, CrudDetailView):
         permission_required = permissoes_autor()
 
-        def get_context_data(self, **kwargs):
-            context = super(DetailView, self).get_context_data(**kwargs)
-            if self.object.materia:
-                context['form'].fields['tipo_materia'].initial = (
-                    self.object.materia.tipo.id)
-                context['form'].fields['numero_materia'].initial = (
-                    self.object.materia.numero)
-                context['form'].fields['ano_materia'].initial = (
-                    self.object.materia.ano)
-            return context
-
-        @property
-        def layout_key(self):
-            return 'ProposicaoCreate'
-
         def has_permission(self):
             perms = self.get_permission_required()
-            if self.request.user.has_perms(perms):
-                if (Proposicao.objects.filter(
-                   id=self.kwargs['pk'],
-                   autor__user_id=self.request.user.id).exists()):
-                    return True
-                else:
-                    return False
-            else:
+            if not self.request.user.has_perms(perms):
                 return False
+
+            return (Proposicao.objects.filter(
+                id=self.kwargs['pk'],
+                autor__user_id=self.request.user.id).exists())
 
     class ListView(PermissionRequiredMixin, CrudListView):
         ordering = ['-data_envio', 'descricao']
@@ -478,28 +488,52 @@ class ProposicaoCrud(Crud):
                     obj.data_recebimento = 'Não recebida'
                 else:
                     obj.data_recebimento = obj.data_recebimento.strftime(
-                                            "%d/%m/%Y %H:%M")
+                        "%d/%m/%Y %H:%M")
 
             return [self._as_row(obj) for obj in object_list]
 
         def get_queryset(self):
+            # Só tem acesso as Proposicoes criadas por ele que ainda nao foram
+            # recebidas ou foram devolvidas
             lista = Proposicao.objects.filter(
                 autor__user_id=self.request.user.id)
+            lista = lista.filter(
+                Q(data_recebimento__isnull=True) |
+                Q(data_devolucao__isnull=False))
+
             return lista
 
     class DeleteView(PermissionRequiredMixin, CrudDeleteView):
-        permission_required = permissoes_materia()
+        permission_required = {'materia.delete_proposicao'}
+
+        def has_permission(self):
+            perms = self.get_permission_required()
+            if not self.request.user.has_perms(perms):
+                return False
+
+            return (Proposicao.objects.filter(
+                id=self.kwargs['pk'],
+                autor__user_id=self.request.user.id).exists())
 
         def delete(self, request, *args, **kwargs):
             proposicao = Proposicao.objects.get(id=self.kwargs['pk'])
 
-            if not proposicao.data_envio:
+            if not proposicao.data_envio or proposicao.data_devolucao:
                 proposicao.delete()
                 return HttpResponseRedirect(
                     reverse('sapl.materia:proposicao_list'))
-            else:
+
+            elif not proposicao.data_recebimento:
                 proposicao.data_envio = None
                 proposicao.save()
+                return HttpResponseRedirect(
+                    reverse('sapl.materia:proposicao_detail',
+                            kwargs={'pk': proposicao.pk}))
+
+            else:
+                msg = _('Essa proposição já foi recebida. ' +
+                        'Não pode mais ser excluída/recuperada')
+                messages.add_message(self.request, messages.ERROR, msg)
                 return HttpResponseRedirect(
                     reverse('sapl.materia:proposicao_detail',
                             kwargs={'pk': proposicao.pk}))
@@ -507,6 +541,16 @@ class ProposicaoCrud(Crud):
 
 class ReciboProposicaoView(TemplateView):
     template_name = "materia/recibo_proposicao.html"
+    permission_required = permissoes_autor()
+
+    def has_permission(self):
+            perms = self.get_permission_required()
+            if not self.request.user.has_perms(perms):
+                return False
+
+            return (Proposicao.objects.filter(
+                id=self.kwargs['pk'],
+                autor__user_id=self.request.user.id).exists())
 
     def get_context_data(self, **kwargs):
         context = super(ReciboProposicaoView, self).get_context_data(
@@ -514,8 +558,8 @@ class ReciboProposicaoView(TemplateView):
         proposicao = Proposicao.objects.get(pk=self.kwargs['pk'])
         context.update({'proposicao': proposicao,
                         'hash': gerar_hash_arquivo(
-                                    proposicao.texto_original.path,
-                                    self.kwargs['pk'])})
+                            proposicao.texto_original.path,
+                            self.kwargs['pk'])})
         return context
 
 
@@ -572,13 +616,18 @@ class TramitacaoCrud(MasterDetailCrud):
             return super(CreateView, self).post(request, *args, **kwargs)
 
     class UpdateView(PermissionRequiredMixin, MasterDetailCrud.UpdateView):
-        form_class = TramitacaoForm
+        form_class = TramitacaoUpdateForm
         permission_required = permissoes_materia()
 
         def post(self, request, *args, **kwargs):
-            materia = MateriaLegislativa.objects.get(id=kwargs['pk'])
+            materia = MateriaLegislativa.objects.get(
+                tramitacao__id=kwargs['pk'])
             do_envia_email_tramitacao(request, materia)
             return super(UpdateView, self).post(request, *args, **kwargs)
+
+        @property
+        def layout_key(self):
+            return 'TramitacaoUpdate'
 
     class ListView(MasterDetailCrud.ListView):
 
@@ -597,7 +646,7 @@ class TramitacaoCrud(MasterDetailCrud):
                           kwargs={'pk': tramitacao.materia.id})
 
             if tramitacao.pk != materia.tramitacao_set.last().pk:
-                msg = _('Somente a útlima tramitação pode ser deletada!')
+                msg = _('Somente a última tramitação pode ser deletada!')
                 messages.add_message(request, messages.ERROR, msg)
                 return HttpResponseRedirect(url)
             else:
@@ -928,11 +977,6 @@ class MateriaLegislativaPesquisaView(FilterView):
 
         context['title'] = _('Pesquisar Matéria Legislativa')
 
-        paginator = context['paginator']
-        page_obj = context['page_obj']
-        context['page_range'] = make_pagination(
-            page_obj.number, paginator.num_pages)
-
         self.filterset.form.fields['o'].label = _('Ordenação')
 
         qr = self.request.GET.copy()
@@ -1206,3 +1250,127 @@ def do_envia_email_tramitacao(request, materia):
 
     enviar_emails(sender, recipients, messages)
     return None
+
+
+class DocumentoAcessorioEmLoteView(PermissionRequiredMixin, FilterView):
+    filterset_class = AcessorioEmLoteFilterSet
+    template_name = 'materia/em_lote/acessorio.html'
+    permission_required = permissoes_materia()
+
+    def get_context_data(self, **kwargs):
+        context = super(DocumentoAcessorioEmLoteView,
+                        self).get_context_data(**kwargs)
+
+        context['title'] = _('Documentos Acessórios em Lote')
+        # Verifica se os campos foram preenchidos
+        if not self.filterset.form.is_valid():
+            return context
+
+        qr = self.request.GET.copy()
+        context['tipos_docs'] = TipoDocumento.objects.all()
+        context['filter_url'] = ('&' + qr.urlencode()) if len(qr) > 0 else ''
+        return context
+
+    def post(self, request, *args, **kwargs):
+        marcadas = request.POST.getlist('materia_id')
+
+        if len(marcadas) == 0:
+            msg = _('Nenhuma máteria foi selecionada.')
+            messages.add_message(request, messages.ERROR, msg)
+            return self.get(request, self.kwargs)
+
+        tipo = TipoDocumento.objects.get(descricao=request.POST['tipo'])
+
+        for materia_id in marcadas:
+            DocumentoAcessorio.objects.create(
+                materia_id=materia_id,
+                tipo=tipo,
+                arquivo=request.POST['arquivo'],
+                nome=request.POST['nome'],
+                data=datetime.strptime(request.POST['data'], "%d/%m/%Y"),
+                autor=Autor.objects.get(id=request.POST['autor']),
+                ementa=request.POST['ementa']
+            )
+        msg = _('Documento(s) criado(s).')
+        messages.add_message(request, messages.SUCCESS, msg)
+        return self.get(request, self.kwargs)
+
+
+class PrimeiraTramitacaoEmLoteView(PermissionRequiredMixin, FilterView):
+    filterset_class = PrimeiraTramitacaoEmLoteFilterSet
+    template_name = 'materia/em_lote/tramitacao.html'
+    permission_required = permissoes_materia()
+
+    def get_context_data(self, **kwargs):
+        context = super(PrimeiraTramitacaoEmLoteView,
+                        self).get_context_data(**kwargs)
+
+        # Verifica se os campos foram preenchidos
+        if not self.filterset.form.is_valid():
+            return context
+
+        context['title'] = _('Primeira Tramitação em Lote')
+
+        qr = self.request.GET.copy()
+        context['unidade_destino'] = UnidadeTramitacao.objects.all()
+        context['status_tramitacao'] = StatusTramitacao.objects.all()
+        context['turnos_tramitacao'] = TURNO_TRAMITACAO_CHOICES
+        context['urgente_tramitacao'] = YES_NO_CHOICES
+        context['unidade_local'] = UnidadeTramitacao.objects.all()
+
+        # Pega somente matéria que não possuem tramitação
+        if (type(self.__dict__['filterset']).__name__ ==
+                'PrimeiraTramitacaoEmLoteFilterSet'):
+            context['object_list'] = context['object_list'].filter(
+                tramitacao__isnull=True)
+        else:
+            context['title'] = _('Tramitação em Lote')
+            context['unidade_local'] = [UnidadeTramitacao.objects.get(
+                id=qr['tramitacao__unidade_tramitacao_local'])]
+
+        context['filter_url'] = ('&' + qr.urlencode()) if len(qr) > 0 else ''
+        return context
+
+    def post(self, request, *args, **kwargs):
+        marcadas = request.POST.getlist('materia_id')
+
+        if len(marcadas) == 0:
+            msg = _('Nenhuma máteria foi selecionada.')
+            messages.add_message(request, messages.ERROR, msg)
+            return self.get(request, self.kwargs)
+
+        if request.POST['data_encaminhamento']:
+            data_encaminhamento = datetime.strptime(
+                request.POST['data_encaminhamento'], "%d/%m/%Y")
+        else:
+            data_encaminhamento = None
+
+        if request.POST['data_fim_prazo']:
+            data_fim_prazo = datetime.strptime(
+                request.POST['data_fim_prazo'], "%d/%m/%Y")
+        else:
+            data_fim_prazo = None
+
+        for materia_id in marcadas:
+            Tramitacao.objects.create(
+                materia_id=materia_id,
+                data_tramitacao=datetime.strptime(
+                    request.POST['data_tramitacao'], "%d/%m/%Y"),
+                data_encaminhamento=data_encaminhamento,
+                data_fim_prazo=data_fim_prazo,
+                unidade_tramitacao_local_id=request.POST[
+                    'unidade_tramitacao_local'],
+                unidade_tramitacao_destino_id=request.POST[
+                    'unidade_tramitacao_destino'],
+                urgente=request.POST['urgente'],
+                status_id=request.POST['status'],
+                turno=request.POST['turno'],
+                texto=request.POST['texto']
+            )
+        msg = _('Tramitação completa.')
+        messages.add_message(request, messages.SUCCESS, msg)
+        return self.get(request, self.kwargs)
+
+
+class TramitacaoEmLoteView(PrimeiraTramitacaoEmLoteView):
+    filterset_class = TramitacaoEmLoteFilterSet

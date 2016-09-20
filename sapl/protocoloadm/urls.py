@@ -17,7 +17,8 @@ from sapl.protocoloadm.views import (AnularProtocoloAdmView,
                                      ProtocoloPesquisaView,
                                      StatusTramitacaoAdministrativoCrud,
                                      TipoDocumentoAdministrativoCrud,
-                                     TipoInstituicaoCrud)
+                                     TipoInstituicaoCrud, TramitacaoAdmCrud,
+                                     pesquisa_autores)
 
 from .apps import AppConfig
 
@@ -30,6 +31,8 @@ urlpatterns = [
         include(TipoDocumentoAdministrativoCrud.get_urls())),
     url(r'^protocoloadm/doc-acessorio/',
         include(DocumentoAcessorioAdministrativoCrud.get_urls())),
+    url(r'^protocoloadm/tramitacao-doc-adm/',
+        include(TramitacaoAdmCrud.get_urls())),
     url(r'^protocoloadm/status-tramitacao-adm/',
         include(StatusTramitacaoAdministrativoCrud.get_urls())),
     url(r'^protocoloadm/tipo-instituicao/',
@@ -65,4 +68,10 @@ urlpatterns = [
         ComprovanteProtocoloView.as_view(), name='comprovante_protocolo'),
     url(r'^protocoloadm/(?P<pk>\d+)/(?P<ano>\d+)/criar_documento$',
         CriarDocumentoProtocolo.as_view(), name='criar_documento'),
+
+    # FIXME: Usado para pesquisar autor
+    # Melhor forma de fazer?
+    # Deve mudar de app?
+    url(r'^proposicao/pesquisar_autor',
+        pesquisa_autores, name='pesquisar_autor'),
 ]

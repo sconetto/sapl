@@ -100,6 +100,17 @@ def create_barcode(value):
 
 YES_NO_CHOICES = [(True, _('Sim')), (False, _('Não'))]
 
+TURNO_TRAMITACAO_CHOICES = [
+    ('P', _('Primeiro')),
+    ('S', _('Segundo')),
+    ('U', _('Único')),
+    ('L', _('Suplementar')),
+    ('F', _('Final')),
+    ('A', _('Votação única em Regime de Urgência')),
+    ('B', _('1ª Votação')),
+    ('C', _('2ª e 3ª Votação')),
+]
+
 
 def listify(function):
     @wraps(function)
@@ -222,75 +233,60 @@ def intervalos_tem_intersecao(a_inicio, a_fim, b_inicio, b_fim):
     return maior_inicio <= menor_fim
 
 
-def permissoes_materia():
+def permissoes(nome_grupo, app_label):
     lista_permissoes = []
-    cts = ContentType.objects.filter(app_label='materia')
-    perms_materia = list(Permission.objects.filter(content_type__in=cts))
-    for p in perms_materia:
-        lista_permissoes.append('materia.' + p.codename)
+    try:
+        perms = list(Permission.objects.filter(
+            group__name=nome_grupo))
+        for p in perms:
+            lista_permissoes.append('%s.%s' % (app_label, p.codename))
+    except:
+        pass
     return set(lista_permissoes)
+
+
+def permissoes_materia():
+    return permissoes('Operador de Matéria', 'materia')
 
 
 def permissoes_comissoes():
-    lista_permissoes = []
-    cts = ContentType.objects.filter(app_label='comissoes')
-    perms_comissoes = list(Permission.objects.filter(content_type__in=cts))
-    for p in perms_comissoes:
-        lista_permissoes.append('comissoes.' + p.codename)
-    return set(lista_permissoes)
+    return permissoes('Operador de Comissões', 'comissoes')
 
 
 def permissoes_norma():
-    lista_permissoes = []
-    cts = ContentType.objects.filter(app_label='norma')
-    perms_norma = list(Permission.objects.filter(content_type__in=cts))
-    for p in perms_norma:
-        lista_permissoes.append('norma.' + p.codename)
-    return set(lista_permissoes)
+    return permissoes('Operador de Norma Jurídica', 'norma')
+
+
+def permissoes_protocoloadm():
+    return permissoes('Operador de Protocolo Administrativo', 'protocoloadm')
+
+
+def permissoes_adm():
+    return permissoes('Operador Administrativo', 'protocoloadm')
+
+
+def permissoes_sessao():
+    return permissoes('Operador de Sessão Plenária', 'sessao')
+
+
+def permissoes_painel():
+    return permissoes('Operador de Painel Eletrônico', 'painel')
+
+
+def permissoes_autor():
+    return permissoes('Autor', 'materia')
 
 
 def permissoes_parlamentares():
     lista_permissoes = []
-    cts = ContentType.objects.filter(app_label='parlamentares')
-    perms_parlamentares = list(Permission.objects.filter(content_type__in=cts))
-    for p in perms_parlamentares:
-        lista_permissoes.append('parlamentares.' + p.codename)
-    return set(lista_permissoes)
-
-
-def permissoes_protocoloadm():
-    lista_permissoes = []
-    perms_protocolo = Permission.objects.filter(
-        group__name='Operador de Protocolo Administrativo')
-    for p in perms_protocolo:
-        lista_permissoes.append('protocoloadm.' + p.codename)
-    return set(lista_permissoes)
-
-
-def permissoes_adm():
-    lista_permissoes = []
-    perms_adm = Permission.objects.filter(
-        group__name='Operador Administrativo')
-    for p in perms_adm:
-        lista_permissoes.append('protocoloadm.' + p.codename)
-    return set(lista_permissoes)
-
-
-def permissoes_sessao():
-    lista_permissoes = []
-    perms_sessao = list(Permission.objects.filter(
-        group__name='Operador de Sessão Plenária'))
-    for p in perms_sessao:
-        lista_permissoes.append('sessao.' + p.codename)
-    return set(lista_permissoes)
-
-
-def permissoes_painel():
-    lista_permissoes = []
-    perms_painel = list(Permission.objects.filter(
-        group__name='Operador de Painel Eletrônico'))
-    for p in perms_painel:
-        lista_permissoes.append('painel.' + p.codename)
+    try:
+        cts = ContentType.objects.filter(app_label='parlamentares')
+        perms_parlamentares = list(Permission.objects.filter(
+            content_type__in=cts))
+        for p in perms_parlamentares:
+            lista_permissoes.append('parlamentares.' + p.codename)
+    except:
+        pass
     return set(lista_permissoes)
 
 
@@ -300,15 +296,6 @@ def permissao_tb_aux(self):
         return True
     else:
         return False
-
-
-def permissoes_autor():
-    lista_permissoes = []
-    perms_autor = list(Permission.objects.filter(
-        group__name='Autor'))
-    for p in perms_autor:
-        lista_permissoes.append('materia.' + p.codename)
-    return set(lista_permissoes)
 
 
 def gerar_hash_arquivo(arquivo, pk, block_size=2**20):

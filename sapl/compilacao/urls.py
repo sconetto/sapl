@@ -34,7 +34,8 @@ urlpatterns_compilacao = [
         views.DispositivoView.as_view(), name='dispositivo'),
 
     url(r'^(?P<ta_id>[0-9]+)/text/(?P<dispositivo_id>[0-9]+)/refresh',
-        views.DispositivoSimpleEditView.as_view(), name='dispositivo_refresh'),
+        views.DispositivoDinamicEditView.as_view(),
+        name='dispositivo_refresh'),
 
     url(r'^(?P<ta_id>[0-9]+)/text/(?P<pk>[0-9]+)/edit$',
         views.DispositivoEdicaoBasicaView.as_view(), name='dispositivo_edit'),
@@ -51,8 +52,6 @@ urlpatterns_compilacao = [
         views.DispositivoDefinidorVigenciaView.as_view(),
         name='dispositivo_edit_definidor_vigencia'),
 
-    url(r'^(?P<ta_id>[0-9]+)/text/(?P<dispositivo_id>[0-9]+)/actions',
-        views.ActionsEditView.as_view(), name='dispositivo_actions'),
 
     url(r'^(?P<ta_id>[0-9]+)/text/'
         '(?P<dispositivo_id>[0-9]+)/nota/create$',
@@ -109,7 +108,6 @@ urlpatterns_compilacao = [
         views.TipoTaUpdateView.as_view(), name='tipo_ta_edit'),
     url(r'^config/tipo-textoarticulado/(?P<pk>[0-9]+)/delete$',
         views.TipoTaDeleteView.as_view(), name='tipo_ta_delete'),
-
 
 ]
 

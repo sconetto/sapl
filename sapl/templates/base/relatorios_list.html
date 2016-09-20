@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load i18n crispy_forms_tags %}
+
+{% block base_content %}
+<fieldset>
+  <legend>Relatórios Administrativos</legend>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Título</th>
+        <th>Descrição</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><a href="{% url 'sapl.base:materia_por_tramitacao' %}">Matérias em tramitação</a></td>
+          <td> Matérias Legislativas por Ano, Tipo, Local atual e Status da Tramitação informados. </td>
+        </tr>
+        <tr>
+          <td><a href="{% url 'sapl.base:materia_por_autor' %}">Matérias por Autor</a></td>
+          <td> Listagem e totalização de matérias por autor, com filtros para tipo e período. </td>
+        </tr>
+        <tr>
+          <td><a href="{% url 'sapl.base:materia_por_ano_autor_tipo' %}">Matérias por Ano, Autor e Tipo</a></td>
+          <td> Totalização anual de matérias agrupadas por autor e tipo. </td>
+        </tr>
+        <tr>
+          <td><a href="{% url 'sapl.base:presenca_sessao' %}">Presença nas sessões</a></td>
+          <td>Presença dos parlamentares nas sessões plenárias.</td>
+        </tr>
+        <tr>
+          <td><a href="{% url 'sapl.base:atas' %}">Atas</a></td>
+          <td> Atas de Sessão Plenária. </td>
+        </tr>
+        <tr>
+          <td><a href="{% url 'sapl.base:historico_tramitacoes' %}">Histórico de tramitações</a></td>
+          <td> Histórico de tramitações por período e local informados. </td>
+        </tr>
+    </tbody>
+  </table>
+</fieldset
+{% endblock base_content %}

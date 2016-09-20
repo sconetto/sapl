@@ -18,11 +18,16 @@ class Legislatura(models.Model):
         verbose_name = _('Legislatura')
         verbose_name_plural = _('Legislaturas')
 
+    def atual(self):
+        current_year = datetime.now().year
+        if(self.data_inicio.year <= current_year and
+           self.data_fim.year >= current_year):
+            return True
+        else:
+            return False
+
     def __str__(self):
-        # XXX Usar id mesmo? Ou criar campo para nº legislatura?
-        current_date = datetime.now().year
-        if(self.data_inicio.year <= current_date and
-           self.data_fim.year >= current_date):
+        if self.atual():
             current = ' (%s)' % _('Atual')
         else:
             current = ''
@@ -239,7 +244,8 @@ class Parlamentar(models.Model):
         max_length=100,
         blank=True,
         verbose_name=_('Locais de Atuação'))
-    ativo = models.BooleanField(verbose_name=_('Ativo na Casa?'))
+    ativo = models.BooleanField(db_index=True,
+                                verbose_name=_('Ativo na Casa?'))
     biografia = models.TextField(
         blank=True, verbose_name=_('Biografia'))
     # XXX Esse atribuito foi colocado aqui para não atrapalhar a migração
@@ -403,3 +409,31 @@ class ComposicaoMesa(models.Model):
         return _('%(parlamentar)s - %(cargo)s') % {
             'parlamentar': self.parlamentar, 'cargo': self.cargo
         }
+
+
+class Frente(models.Model):
+    '''
+        * Uma frente agrupa vários parlamentares
+        * Cada parlamentar pode fazer parte de uma ou mais frentes
+        * Uma frente pode existir por mais de uma legislatura?
+    '''
+    nome = models.CharField(
+        max_length=80,
+        verbose_name=_('Nome da Frente'))
+    parlamentares = models.ManyToManyField(Parlamentar,
+                                           blank=True,
+                                           verbose_name=_('Parlamentares'))
+    data_criacao = models.DateField(verbose_name=_('Data Criação'))
+    data_extincao = models.DateField(
+        blank=True, null=True, verbose_name=_('Data Dissolução'))
+    descricao = models.TextField(blank=True, verbose_name=_('Descrição'))
+
+    class Meta:
+        verbose_name = _('Frente')
+        verbose_name_plural = _('Frentes')
+
+    def get_parlamentares(self):
+        return Parlamentar.objects.filter(ativo=True)
+
+    def __str__(self):
+        return self.nome

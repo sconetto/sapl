@@ -98,7 +98,8 @@ ProposicaoCreate:
   {% trans 'Proposição' %}:
   - tipo  data_envio
   - descricao
-
+  {% trans 'Materia' %}:
+  - tipo_materia numero_materia ano_materia
   {% trans 'Complemento' %}:
   - texto_original
 
@@ -125,6 +126,12 @@ Tramitacao:
   {% trans 'Tramitação' %}:
   - unidade_tramitacao_local unidade_tramitacao_destino
   - data_tramitacao data_encaminhamento data_fim_prazo
+  - status  turno  urgente
+  - texto
+
+TramitacaoUpdate:
+  {% trans 'Tramitação' %}:
+  - unidade_tramitacao_destino data_encaminhamento data_fim_prazo
   - status  turno  urgente
   - texto
 

@@ -2,6 +2,7 @@ import json
 from datetime import date, datetime
 
 from braces.views import FormValidMessageMixin
+from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
@@ -14,6 +15,7 @@ from django.views.generic.base import TemplateView
 from django_filters.views import FilterView
 
 import sapl.crud.base
+from sapl.base.models import AppConfig
 from sapl.crud.base import (Crud, CrudBaseMixin, CrudCreateView,
                             CrudDeleteView, CrudListView, CrudUpdateView,
                             make_pagination)
@@ -24,10 +26,9 @@ from sapl.utils import (create_barcode, get_client_ip, permissoes_adm,
 
 from .forms import (AnularProcoloAdmForm, DocumentoAcessorioAdministrativoForm,
                     DocumentoAdministrativoFilterSet,
-                    DocumentoAdministrativoForm,
-                    ProtocoloDocumentForm, ProtocoloFilterSet,
-                    ProtocoloMateriaForm, TramitacaoAdmEditForm,
-                    TramitacaoAdmForm)
+                    DocumentoAdministrativoForm, ProtocoloDocumentForm,
+                    ProtocoloFilterSet, ProtocoloMateriaForm,
+                    TramitacaoAdmEditForm, TramitacaoAdmForm)
 from .models import (Autor, DocumentoAcessorioAdministrativo,
                      DocumentoAdministrativo, Protocolo,
                      StatusTramitacaoAdministrativo,
@@ -207,18 +208,26 @@ class ProtocoloDocumentoView(PermissionRequiredMixin,
     def form_valid(self, form):
         f = form.save(commit=False)
 
-        if form.cleaned_data['numeracao'] == '1':
-            numeracao = Protocolo.objects.filter(
-                ano=date.today().year).aggregate(Max('numero'))
-        elif form.cleaned_data['numeracao'] == '2':
-            numeracao = Protocolo.objects.all().aggregate(Max('numero'))
+        try:
+            numeracao = AppConfig.objects.last().sequencia_numeracao
+        except AttributeError:
+            msg = _('É preciso definir a sequencia de ' +
+                    'numeração na tabelas auxiliares!')
+            messages.add_message(self.request, messages.ERROR, msg)
+            return self.render_to_response(self.get_context_data())
 
-        if numeracao['numero__max'] is None:
-            numeracao['numero__max'] = 0
+        if numeracao == 'A':
+            numero = Protocolo.objects.filter(
+                ano=date.today().year).aggregate(Max('numero'))
+        elif numeracao == 'U':
+            numero = Protocolo.objects.all().aggregate(Max('numero'))
+
+        if numero['numero__max'] is None:
+            numero['numero__max'] = 0
 
         f.tipo_processo = '0'  # TODO validar o significado
         f.anulado = False
-        f.numero = numeracao['numero__max'] + 1
+        f.numero = numero['numero__max'] + 1
         f.ano = datetime.now().year
         f.data = datetime.now().strftime('%Y-%m-%d')
         f.hora = datetime.now().strftime('%H:%M')
@@ -320,18 +329,26 @@ class ProtocoloMateriaView(PermissionRequiredMixin, CreateView):
         return reverse('sapl.protocoloadm:protocolo')
 
     def form_valid(self, form):
-        if self.request.POST['numeracao'] == '1':
-            numeracao = Protocolo.objects.filter(
+        try:
+            numeracao = AppConfig.objects.last().sequencia_numeracao
+        except AttributeError:
+            msg = _('É preciso definir a sequencia de ' +
+                    'numeração na tabelas auxiliares!')
+            messages.add_message(self.request, messages.ERROR, msg)
+            return self.render_to_response(self.get_context_data())
+
+        if numeracao == 'A':
+            numero = Protocolo.objects.filter(
                 ano=date.today().year).aggregate(Max('numero'))
-        else:
-            numeracao = Protocolo.objects.all().aggregate(Max('numero'))
+        elif numeracao == 'U':
+            numero = Protocolo.objects.all().aggregate(Max('numero'))
 
         if numeracao is None:
-            numeracao['numero__max'] = 0
+            numero['numero__max'] = 0
 
         protocolo = Protocolo()
 
-        protocolo.numero = numeracao['numero__max'] + 1
+        protocolo.numero = numero['numero__max'] + 1
         protocolo.ano = datetime.now().year
         protocolo.data = datetime.now().strftime("%Y-%m-%d")
         protocolo.hora = datetime.now().strftime("%H:%M")

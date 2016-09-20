@@ -5,18 +5,20 @@ from sapl.materia.views import (AcompanhamentoConfirmarView,
                                 AcompanhamentoMateriaView, AnexadaCrud,
                                 AutorCrud, AutoriaCrud, ConfirmarEmailView,
                                 ConfirmarProposicao, DespachoInicialCrud,
-                                DocumentoAcessorioCrud, LegislacaoCitadaCrud,
-                                MateriaLegislativaCrud,
+                                DocumentoAcessorioCrud,
+                                DocumentoAcessorioEmLoteView,
+                                LegislacaoCitadaCrud, MateriaLegislativaCrud,
                                 MateriaLegislativaPesquisaView, MateriaTaView,
                                 NumeracaoCrud, OrgaoCrud, OrigemCrud,
-                                ProposicaoCrud, ProposicaoDevolvida,
-                                ProposicaoPendente, ProposicaoRecebida,
-                                ProposicaoTaView, ReceberProposicao,
-                                ReciboProposicaoView, RegimeTramitacaoCrud,
-                                RelatoriaCrud, StatusTramitacaoCrud,
-                                TipoAutorCrud, TipoDocumentoCrud,
-                                TipoFimRelatoriaCrud, TipoMateriaCrud,
-                                TipoProposicaoCrud, TramitacaoCrud,
+                                PrimeiraTramitacaoEmLoteView, ProposicaoCrud,
+                                ProposicaoDevolvida, ProposicaoPendente,
+                                ProposicaoRecebida, ProposicaoTaView,
+                                ReceberProposicao, ReciboProposicaoView,
+                                RegimeTramitacaoCrud, RelatoriaCrud,
+                                StatusTramitacaoCrud, TipoAutorCrud,
+                                TipoDocumentoCrud, TipoFimRelatoriaCrud,
+                                TipoMateriaCrud, TipoProposicaoCrud,
+                                TramitacaoCrud, TramitacaoEmLoteView,
                                 UnidadeTramitacaoCrud)
 
 from .apps import AppConfig
@@ -34,7 +36,8 @@ urlpatterns = [
                               RelatoriaCrud.get_urls() +
                               DocumentoAcessorioCrud.get_urls())),
 
-    url(r'^confirmar/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})$',
+    url(r'''^confirmar/(?P<uidb64>[0-9A-Za-z_\-]+)/
+        (?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})$''',
         ConfirmarEmailView.as_view(), name='confirmar_email'),
 
     url(r'^proposicao/', include(ProposicaoCrud.get_urls())),
@@ -85,4 +88,12 @@ urlpatterns = [
     url(r'^materia/(?P<pk>\d+)/acompanhar-excluir$',
         AcompanhamentoExcluirView.as_view(),
         name='acompanhar_excluir'),
+
+    url(r'^acessorio-em-lote', DocumentoAcessorioEmLoteView.as_view(),
+        name='acessorio_em_lote'),
+    url(r'^primeira-tramitacao-em-lote',
+        PrimeiraTramitacaoEmLoteView.as_view(),
+        name='primeira_tramitacao_em_lote'),
+    url(r'^tramitacao-em-lote', TramitacaoEmLoteView.as_view(),
+        name='tramitacao_em_lote'),
 ]

@@ -1,18 +1,16 @@
 import pytest
-
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.urlresolvers import reverse
-
 from model_mommy import mommy
+
 from sapl.comissoes.models import Comissao, TipoComissao
 from sapl.materia.models import (Anexada, Autor, Autoria, DespachoInicial,
                                  DocumentoAcessorio, MateriaLegislativa,
-                                 Numeracao, Proposicao,
-                                 RegimeTramitacao, StatusTramitacao,
-                                 TipoAutor, TipoProposicao, TipoDocumento,
-                                 TipoMateriaLegislativa, Tramitacao,
-                                 UnidadeTramitacao)
+                                 Numeracao, Proposicao, RegimeTramitacao,
+                                 StatusTramitacao, TipoAutor, TipoDocumento,
+                                 TipoMateriaLegislativa, TipoProposicao,
+                                 Tramitacao, UnidadeTramitacao)
 from sapl.norma.models import (LegislacaoCitada, NormaJuridica,
                                TipoNormaJuridica)
 
@@ -278,6 +276,8 @@ def test_tramitacao_submit(admin_client):
          'urgente': True,
          'status': status_tramitacao.pk,
          'data_tramitacao': '2016-03-21',
+         'data_fim_prazo': '2016-03-22',
+         'data_encaminhamento': '2016-03-22',
          'texto': 'Texto_Teste',
          'salvar': 'salvar'},
         follow=True)
