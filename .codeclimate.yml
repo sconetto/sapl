@@ -12,7 +12,7 @@ engines:
   fixme:
     enabled: true
   radon:
-    enabled: true      
+    enabled: true
 ratings:
   paths:
   - "**.py"
@@ -20,4 +20,4 @@ ratings:
 exclude_paths:
 - sapl/**/migrations/*
 - sapl/**/legacy/*
-- sapl/relatorios/*
+- sapl/relatorios/
