@@ -9,10 +9,12 @@ engines:
       languages:
       - python
       - javascript
+  fixme:
+    enabled: true
+  radon:
+    enabled: true      
 ratings:
   paths:
-  - "sapl/*.py"
-  - "sapl/**/*"
   - "**.py"
   - "**.js"
 exclude_paths:
