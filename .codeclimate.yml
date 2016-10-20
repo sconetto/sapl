@@ -11,8 +11,10 @@ engines:
       - javascript
 ratings:
   paths:
-  - sapl/**/*
+  - "sapl/*.py"
+  - "sapl/**/*"
   - "**.py"
+  - "**.js"
 exclude_paths:
 - sapl/**/migrations/*
 - sapl/**/legacy/*
