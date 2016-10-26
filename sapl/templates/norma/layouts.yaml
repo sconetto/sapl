@@ -17,9 +17,11 @@ NormaJuridica:
   - ementa
   - indexacao
   - observacao
+  - assuntos
 
 NormaJuridicaCreate:
   {% trans 'Identificação Básica' %}:
+  - assuntos
   - tipo  numero  ano
   - data  esfera_federacao  complemento
   - tipo_materia  numero_materia  ano_materia

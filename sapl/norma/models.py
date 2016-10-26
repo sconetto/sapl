@@ -98,6 +98,7 @@ class NormaJuridica(models.Model):
     # XXX was a CharField (attention on migrate)
     assuntos = models.ManyToManyField(
         AssuntoNorma,
+        blank=True, verbose_name=_('Assuntos'),
         through='AssuntoNormaRelationship')
     data_vigencia = models.DateField(blank=True, null=True)
     timestamp = models.DateTimeField()

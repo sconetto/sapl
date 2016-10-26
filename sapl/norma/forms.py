@@ -12,13 +12,20 @@ from sapl.materia.models import MateriaLegislativa, TipoMateriaLegislativa
 from sapl.settings import MAX_DOC_UPLOAD_SIZE
 from sapl.utils import RANGE_ANOS
 
-from .models import NormaJuridica
+from .models import AssuntoNorma, NormaJuridica, AssuntoNormaRelationship
 
 
 def get_esferas():
     return [('E', 'Estadual'),
             ('F', 'Federal'),
             ('M', 'Municipal')]
+
+
+def assuntos_norma():
+    assuntos = []
+    for a in AssuntoNorma.objects.all():
+        assuntos.append([a.pk, a.assunto])
+    return assuntos
 
 
 YES_NO_CHOICES = [('', '---------'),
@@ -155,7 +162,10 @@ class NormaJuridicaForm(ModelForm):
                   'ementa',
                   'indexacao',
                   'observacao',
-                  'texto_integral']
+                  'texto_integral',
+                  'assuntos']
+
+        widgets = {'assuntos': forms.CheckboxSelectMultiple()}
 
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -177,6 +187,10 @@ class NormaJuridicaForm(ModelForm):
         else:
             cleaned_data['materia'] = None
         return cleaned_data
+
+    def clean_assuntos(self):
+        import ipdb; ipdb.set_trace()
+        return self.cleaned_data
 
     def clean_texto_integral(self):
         texto_integral = self.cleaned_data.get('texto_integral', False)
