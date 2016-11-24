@@ -8,10 +8,14 @@ from django.core.urlresolvers import reverse
 from django.db.models import Max
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
+from django.template import Context, loader
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import CreateView, DetailView, FormView, ListView
 from django.views.generic.base import TemplateView
 from django_filters.views import FilterView
+
+from haystack import indexes
+from haystack.generic_views import SearchView
 
 import sapl
 from sapl.crud.base import Crud, CrudAux, MasterDetailCrud, make_pagination
@@ -578,6 +582,38 @@ class DocumentoAcessorioAdministrativoView(PermissionRequiredMixin, FormView):
     def get_success_url(self):
         pk = self.kwargs['pk']
         return reverse('sapl.protocoloadm:doc_ace_adm', kwargs={'pk': pk})
+
+
+class DocumentoAcessorioIndex(indexes.SearchIndex, indexes.Indexable):
+    texto_pesquisa = indexes.CharField(document=True, use_template=True)
+    pdf = indexes.CharField(model_attr='arquivo')
+
+    def get_model(self):
+        return DocumentoAcessorioAdministrativo
+
+    def prepare(self, obj):
+        data = super(DocumentoAcessorioIndex, self).prepare(obj)
+        file_data = self._get_backend(None).extract_file_contents(
+            obj.attachment,
+        )
+        template = loader.select_template(
+            ('pesquisa/indices/documento_acessorio.txt', ),
+        )
+        data["text"] = template.render(Context({
+            "object": obj,
+            "file_data": file_data,
+        }))
+        return data
+
+
+class PesquisaDocumentoAcessorioIndexView(SearchView):
+
+    def get_context_data(self, *args, **kwargs):
+        context = super(
+            PesquisaDocumentoAcessorioIndexView, self).get_context_data(
+            *args, **kwargs)
+        # do something
+        return context
 
 
 class TramitacaoAdmCrud(MasterDetailCrud):

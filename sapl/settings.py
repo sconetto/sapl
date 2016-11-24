@@ -14,6 +14,7 @@ See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
 
 """
 import logging
+import os
 import sys
 
 from decouple import config
@@ -75,6 +76,7 @@ INSTALLED_APPS = (
     'crispy_forms',
     'easy_thumbnails',
     'floppyforms',
+    'haystack',
     'sass_processor',
     'rest_framework',
 
@@ -266,4 +268,13 @@ def excepthook(*args):
     logging.getLogger(BASE_DIR.name).error(
         'Uncaught exception:', exc_info=args)
 
+
 sys.excepthook = excepthook
+
+
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
+        'PATH': os.path.join(os.path.dirname(__file__), 'whoosh_index'),
+    },
+}

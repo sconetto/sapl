@@ -1,0 +1,2 @@
+{{ object.id }}
+{{ file_data.contents|striptags|safe }}

@@ -49,6 +49,7 @@ urlpatterns = [
     url(r'', include(sapl.protocoloadm.urls)),
     url(r'', include(sapl.compilacao.urls)),
     url(r'', include(sapl.relatorios.urls)),
+    (r'^search/', include('haystack.urls')),
 
     # must come at the end
     #   so that base /sistema/ url doesn't capture its children
