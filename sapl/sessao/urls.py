@@ -31,6 +31,8 @@ app_name = AppConfig.name
 
 
 urlpatterns = [
+    url(r'^search/', include('haystack.urls')),
+
     url(r'^sessao/', include(SessaoCrud.get_urls() + OradorCrud.get_urls() +
                              OradorExpedienteCrud.get_urls() +
                              ExpedienteMateriaCrud.get_urls() +
@@ -127,4 +129,5 @@ urlpatterns = [
         VotacaoExpedienteView.as_view(), name='votacaosecretaexp'),
     url(r'^sessao/(?P<pk>\d+)/matexp/votsec/view/(?P<oid>\d+)/(?P<mid>\d+)$',
         VotacaoExpedienteEditView.as_view(), name='votacaosecretaexpedit'),
+
 ]

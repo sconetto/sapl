@@ -15,6 +15,7 @@ See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
 """
 import logging
 import sys
+import os
 
 from decouple import config
 from dj_database_url import parse as db_url
@@ -38,6 +39,15 @@ LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = '/login/?next='
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+
+# Whoosh
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
+        'PATH': os.path.join(os.path.dirname(__file__), 'whoosh_index'),
+    },
+}
 
 
 # SAPL business apps in dependency order
@@ -77,6 +87,7 @@ INSTALLED_APPS = (
     'floppyforms',
     'sass_processor',
     'rest_framework',
+    'haystack',
 
 
 ) + SAPL_APPS
