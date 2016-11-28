@@ -3,11 +3,9 @@ from haystack import indexes
 from sapl.sessao.models import SessaoPlenaria
 
 
-class PautaIndex(indexes.SearchIndex, index.Indexable):
+class PautaIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
-    # pub_date = indexes.DateTimeField(model_attr='pub_date')
-
-    upload_pauta_auto = indexes.EdgeNgramField(model_attr='title')
+    upload_pauta_auto = indexes.EdgeNgramField(model_attr='upload_pauta_auto')
 
     def get_model(self):
         return SessaoPlenaria

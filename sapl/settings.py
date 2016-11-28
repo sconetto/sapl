@@ -40,7 +40,6 @@ LOGIN_URL = '/login/?next='
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
-
 # Whoosh
 HAYSTACK_CONNECTIONS = {
     'default': {

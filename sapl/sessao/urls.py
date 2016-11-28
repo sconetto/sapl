@@ -31,7 +31,7 @@ app_name = AppConfig.name
 
 
 urlpatterns = [
-    url(r'^search/', include('haystack.urls')),
+    url(r'^search/', include('haystack.urls'), name='haystack_search'),
 
     url(r'^sessao/', include(SessaoCrud.get_urls() + OradorCrud.get_urls() +
                              OradorExpedienteCrud.get_urls() +

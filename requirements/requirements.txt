@@ -26,3 +26,4 @@ rtyaml==0.0.3
 unipath==1.1
 python-magic==0.4.12
 gunicorn==19.6.0
+Whoosh==2.7.4
