@@ -23,7 +23,7 @@ from sapl.sessao.views import (AdicionarVariasMateriasExpediente,
                                recuperar_numero_sessao,
                                reordernar_materias_expediente,
                                reordernar_materias_ordem,
-                               sessao_legislativa_legislatura_ajax)
+                               sessao_legislativa_legislatura_ajax, PautaSearchView)
 
 from .apps import AppConfig
 
@@ -31,7 +31,7 @@ app_name = AppConfig.name
 
 
 urlpatterns = [
-    url(r'^search/', include('haystack.urls'), name='haystack_search'),
+    url(r'^search/?$', PautaSearchView.as_view(), name='haystack_search'),
 
     url(r'^sessao/', include(SessaoCrud.get_urls() + OradorCrud.get_urls() +
                              OradorExpedienteCrud.get_urls() +

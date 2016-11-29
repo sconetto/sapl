@@ -43,6 +43,8 @@ from .models import (Bancada, Bloco, CargoBancada, CargoMesa,
                      PresencaOrdemDia, RegistroVotacao, SessaoPlenaria,
                      SessaoPlenariaPresenca, TipoExpediente,
                      TipoResultadoVotacao, TipoSessaoPlenaria, VotoParlamentar)
+from haystack.generic_views import SearchView
+
 
 TipoSessaoCrud = CrudAux.build(TipoSessaoPlenaria, 'tipo_sessao_plenaria')
 TipoExpedienteCrud = CrudAux.build(TipoExpediente, 'tipo_expediente')
@@ -54,6 +56,17 @@ BancadaCrud = CrudAux.build(
     Bancada, '', list_field_names=['nome', 'legislatura'])
 TipoResultadoVotacaoCrud = CrudAux.build(
     TipoResultadoVotacao, 'tipo_resultado_votacao')
+
+
+class PautaSearchView(SearchView):
+
+    def get_context_data(self, *args, **kwargs):
+        context = super(
+            PautaSearchView, self).get_context_data(*args, **kwargs)
+        if 'query' in context:
+            context['object_list'] = SessaoPlenaria.objects.filter(
+                numero=context['query'])
+        return context
 
 
 def reordernar_materias_expediente(request, pk):

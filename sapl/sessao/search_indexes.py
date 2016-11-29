@@ -1,12 +1,11 @@
 import datetime
 from haystack import indexes
 from sapl.sessao.models import SessaoPlenaria
-from slate import PDF
 
 
 class PautaIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
-    upload_pauta = indexes.EdgeNgramField(model_attr='upload_pauta')
+    upload_pauta = indexes.CharField(model_attr='numero')
 
     # def prepare(self, obj):
     #     data = super(PautaIndex, self).prepare(obj)
