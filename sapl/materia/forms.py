@@ -1,13 +1,14 @@
 
+import os
 from datetime import date, datetime
 from itertools import chain
-import os
 
+import django_filters
 from crispy_forms.bootstrap import (Alert, FormActions, InlineCheckboxes,
                                     InlineRadios)
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import (HTML, Button, Column, Field, Fieldset, Layout,
-                                 Submit, Div)
+from crispy_forms.layout import (HTML, Button, Column, Div, Field, Fieldset,
+                                 Layout, Submit)
 from django import forms
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -22,17 +23,18 @@ from django.utils.encoding import force_text
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
-import django_filters
 
+import sapl
 from sapl.base.models import Autor
 from sapl.comissoes.models import Comissao
-from sapl.compilacao.models import STATUS_TA_PRIVATE,\
-    STATUS_TA_IMMUTABLE_PUBLIC, TextoArticulado, STATUS_TA_PUBLIC,\
-    PerfilEstruturalTextoArticulado
+from sapl.compilacao.models import (STATUS_TA_IMMUTABLE_PUBLIC,
+                                    STATUS_TA_PRIVATE, STATUS_TA_PUBLIC,
+                                    PerfilEstruturalTextoArticulado,
+                                    TextoArticulado)
 from sapl.crispy_layout_mixin import (SaplFormLayout, form_actions, to_column,
                                       to_row)
-from sapl.materia.models import TipoProposicao, MateriaLegislativa,\
-    RegimeTramitacao, TipoDocumento
+from sapl.materia.models import (MateriaLegislativa, RegimeTramitacao,
+                                 TipoDocumento, TipoProposicao)
 from sapl.norma.models import (LegislacaoCitada, NormaJuridica,
                                TipoNormaJuridica)
 from sapl.parlamentares.models import Parlamentar
@@ -42,12 +44,10 @@ from sapl.utils import (RANGE_ANOS, YES_NO_CHOICES,
                         ChoiceWithoutValidationField,
                         MateriaPesquisaOrderingFilter, RangeWidgetOverride,
                         autor_label, autor_modal, models_with_gr_for_model)
-import sapl
 
 from .models import (AcompanhamentoMateria, Anexada, Autoria, DespachoInicial,
-                     DocumentoAcessorio, Numeracao,
-                     Proposicao, Relatoria, TipoMateriaLegislativa, Tramitacao,
-                     UnidadeTramitacao)
+                     DocumentoAcessorio, Numeracao, Proposicao, Relatoria,
+                     TipoMateriaLegislativa, Tramitacao, UnidadeTramitacao)
 
 
 def ANO_CHOICES():
@@ -679,7 +679,7 @@ class PrimeiraTramitacaoEmLoteFilterSet(django_filters.FilterSet):
         self.filters['tipo'].label = 'Tipo de Matéria'
         self.filters['data_apresentacao'].label = 'Data (Inicial - Final)'
         self.form.fields['tipo'].required = True
-        self.form.fields['data_apresentacao'].required = True
+        self.form.fields['data_apresentacao'].required = False
 
         row1 = to_row([('tipo', 12)])
         row2 = to_row([('data_apresentacao', 12)])
@@ -714,7 +714,7 @@ class TramitacaoEmLoteFilterSet(django_filters.FilterSet):
         self.filters['tramitacao__unidade_tramitacao_destino'
                      ].label = 'Unidade Destino (Último Destino)'
         self.form.fields['tipo'].required = True
-        self.form.fields['data_apresentacao'].required = True
+        self.form.fields['data_apresentacao'].required = False
         self.form.fields['tramitacao__status'].required = True
         self.form.fields[
             'tramitacao__unidade_tramitacao_destino'].required = True
@@ -986,29 +986,35 @@ class ProposicaoForm(forms.ModelForm):
         return cd
 
     def save(self, commit=True):
+        cd = self.cleaned_data
+        inst = self.instance
+        if inst.pk:
+            if 'tipo_texto' in cd:
 
-        if self.instance.pk:
-            if 'tipo_texto' in self.cleaned_data:
-                if self.cleaned_data['tipo_texto'] in ['T', ''] and\
-                        self.instance.texto_original:
-                    self.instance.texto_original.delete()
+                if cd['tipo_texto'] == 'T' and inst.texto_original:
+                    inst.texto_original.delete()
 
-                if self.cleaned_data['tipo_texto'] in ['D', '']:
-                    self.instance.texto_articulado.all().delete()
+                elif cd['tipo_texto'] != 'T':
+                    inst.texto_articulado.all().delete()
+
+                    if 'texto_original' in cd and\
+                            not cd['texto_original'] and \
+                            inst.texto_original:
+                        inst.texto_original.delete()
 
             return super().save(commit)
 
-        self.instance.ano = datetime.now().year
+        inst.ano = datetime.now().year
         numero__max = Proposicao.objects.filter(
-            autor=self.instance.autor,
+            autor=inst.autor,
             ano=datetime.now().year).aggregate(Max('numero_proposicao'))
         numero__max = numero__max['numero_proposicao__max']
-        self.instance.numero_proposicao = (
+        inst.numero_proposicao = (
             numero__max + 1) if numero__max else 1
 
-        self.instance.save()
+        inst.save()
 
-        return self.instance
+        return inst
 
 
 class ConfirmarProposicaoForm(ProposicaoForm):
@@ -1158,7 +1164,7 @@ class ConfirmarProposicaoForm(ProposicaoForm):
                 if 'regime_tramitacao' not in cd or\
                         not cd['regime_tramitacao']:
                     raise ValidationError(
-                        _('Regimente de Tramitação deve ser informado.'))
+                        _('Regime de Tramitação deve ser informado.'))
 
             elif self.instance.tipo.content_type.model_class(
             ) == TipoDocumento and not cd['materia_de_vinculo']:
@@ -1209,6 +1215,7 @@ class ConfirmarProposicaoForm(ProposicaoForm):
             self.instance.justificativa_devolucao = ''
             self.instance.data_devolucao = None
             self.instance.data_recebimento = datetime.now()
+            self.instance.materia_de_vinculo = cd['materia_de_vinculo']
 
             if self.instance.texto_articulado.exists():
                 ta = self.instance.texto_articulado.first()
@@ -1375,19 +1382,19 @@ class ConfirmarProposicaoForm(ProposicaoForm):
         protocolo.timestamp = datetime.now()
         protocolo.tipo_protocolo = '1'
 
-        # 1 Processo Legislativo
-        # 0 Processo Administrativo
-        protocolo.tipo_processo = '1'
         protocolo.interessado = str(proposicao.autor)
         protocolo.autor = proposicao.autor
+        protocolo.assunto_ementa = proposicao.descricao
         protocolo.numero_paginas = cd['numero_de_paginas']
         protocolo.anulado = False
 
         if self.instance.tipo.content_type.model_class(
         ) == TipoMateriaLegislativa:
             protocolo.tipo_materia = proposicao.tipo.tipo_conteudo_related
+            protocolo.tipo_processo = '1'
         elif self.instance.tipo.content_type.model_class() == TipoDocumento:
             protocolo.tipo_documento = proposicao.tipo.tipo_conteudo_related
+            protocolo.tipo_processo = '0'
 
         protocolo.save()
 
@@ -1396,6 +1403,7 @@ class ConfirmarProposicaoForm(ProposicaoForm):
 
         # FIXME qdo protocoloadm estiver homologado, verifique a necessidade
         # de redirecionamento para o protocolo.
+        # complete e libere código abaixo para tal.
 
         """
         self.instance.results['url'] = reverse(

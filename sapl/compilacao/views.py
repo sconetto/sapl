@@ -1154,9 +1154,10 @@ class TextEditView(CompMixin, TemplateView):
         result = Dispositivo.objects.filter(ta_id=self.kwargs['ta_id'])
 
         if not result.exists():
+            # FIXME a inserção básica deve ser refatorada para não depender
+            # das classes css
 
             ta = self.object
-
             td = TipoDispositivo.objects.filter(class_css='articulacao')[0]
             a = Dispositivo()
             a.nivel = 0
@@ -1168,6 +1169,8 @@ class TextEditView(CompMixin, TemplateView):
             a.inicio_vigencia = ta.data
             a.inicio_eficacia = ta.data
             a.save()
+
+            return
 
             td = TipoDispositivo.objects.filter(class_css='ementa')[0]
             e = Dispositivo()
@@ -2419,9 +2422,11 @@ class ActionsEditMixin(ActionDragAndMoveDispositivoAlteradoMixin,
             dispositivos_do_bloco = \
                 bloco_alteracao.dispositivos_alterados_set.order_by(
                     'ordem_bloco_atualizador')
-            if dispositivos_do_bloco.exists:
+            if dispositivos_do_bloco.exists():
                 ndp.ordem_bloco_atualizador = dispositivos_do_bloco.last(
                 ).ordem_bloco_atualizador + Dispositivo.INTERVALO_ORDEM
+            else:
+                ndp.ordem_bloco_atualizador = Dispositivo.INTERVALO_ORDEM
             ndp.save()
 
             p.dispositivo_subsequente = ndp

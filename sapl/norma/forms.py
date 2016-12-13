@@ -1,6 +1,5 @@
 from datetime import datetime
 
-import django_filters
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Fieldset, Layout
 from django import forms
@@ -8,13 +7,15 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from django.forms import ModelForm, widgets
 from django.utils.translation import ugettext_lazy as _
+import django_filters
 
 from sapl.crispy_layout_mixin import form_actions, to_row
 from sapl.materia.models import MateriaLegislativa, TipoMateriaLegislativa
 from sapl.settings import MAX_DOC_UPLOAD_SIZE
 from sapl.utils import RANGE_ANOS, RangeWidgetOverride
 
-from .models import AssuntoNorma, NormaJuridica
+from .models import (AssuntoNorma, NormaJuridica, NormaRelacionada,
+                     TipoNormaJuridica)
 
 
 def get_esferas():
@@ -49,6 +50,9 @@ class NormaFilterSet(django_filters.FilterSet):
 
     ementa = django_filters.CharFilter(lookup_expr='icontains')
 
+    assuntos = django_filters.ModelChoiceFilter(
+        queryset=AssuntoNorma.objects.all())
+
     class Meta:
         model = NormaJuridica
         fields = ['tipo', 'numero', 'ano', 'data',
@@ -59,14 +63,13 @@ class NormaFilterSet(django_filters.FilterSet):
 
         row1 = to_row([('tipo', 4), ('numero', 4), ('ano', 4)])
         row2 = to_row([('data', 6), ('data_publicacao', 6)])
-        row3 = to_row([('ementa', 12)])
-        row4 = to_row([('assuntos', 12)])
+        row3 = to_row([('ementa', 8), ('assuntos', 4)])
 
         self.form.helper = FormHelper()
         self.form.helper.form_method = 'GET'
         self.form.helper.layout = Layout(
             Fieldset(_('Pesquisa de Norma'),
-                     row1, row2, row3, row4,
+                     row1, row2, row3,
                      form_actions(save_label='Pesquisar'))
         )
 
@@ -146,3 +149,49 @@ class NormaJuridicaForm(ModelForm):
         norma.materia = self.cleaned_data['materia']
         norma = super(NormaJuridicaForm, self).save(commit=True)
         return norma
+
+
+class NormaRelacionadaForm(ModelForm):
+
+    tipo = forms.ModelChoiceField(
+        label='Tipo',
+        required=True,
+        queryset=TipoNormaJuridica.objects.all(),
+        empty_label='----------',
+    )
+    numero = forms.CharField(label='Número', required=True)
+    ano = forms.CharField(label='Ano', required=True)
+    ementa = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'disabled': 'disabled'}))
+
+    class Meta:
+        model = NormaRelacionada
+        fields = ['tipo', 'numero', 'ano', 'ementa', 'tipo_vinculo']
+
+    def __init__(self, *args, **kwargs):
+        super(NormaRelacionadaForm, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        if self.errors:
+            return self.errors
+        cleaned_data = self.cleaned_data
+
+        try:
+            norma_relacionada = NormaJuridica.objects.get(
+                numero=cleaned_data['numero'],
+                ano=cleaned_data['ano'],
+                tipo=cleaned_data['tipo'])
+        except ObjectDoesNotExist:
+            msg = _('A norma a ser relacionada não existe.')
+            raise ValidationError(msg)
+        else:
+            cleaned_data['norma_relacionada'] = norma_relacionada
+
+        return cleaned_data
+
+    def save(self, commit=False):
+        relacionada = super(NormaRelacionadaForm, self).save(commit)
+        relacionada.norma_relacionada = self.cleaned_data['norma_relacionada']
+        relacionada.save()
+        return relacionada

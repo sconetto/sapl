@@ -200,6 +200,13 @@ class MateriaLegislativa(models.Model):
         return _('%(tipo)s nº %(numero)s de %(ano)s') % {
             'tipo': self.tipo, 'numero': self.numero, 'ano': self.ano}
 
+    def delete(self, using=None, keep_parents=False):
+        if self.texto_original:
+            self.texto_original.delete()
+
+        return models.Model.delete(
+            self, using=using, keep_parents=keep_parents)
+
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
 
@@ -346,6 +353,13 @@ class DocumentoAcessorio(models.Model):
             'data': self.data,
             'autor': self.autor}
 
+    def delete(self, using=None, keep_parents=False):
+        if self.arquivo:
+            self.arquivo.delete()
+
+        return models.Model.delete(
+            self, using=using, keep_parents=keep_parents)
+
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
 
@@ -398,10 +412,9 @@ class Numeracao(models.Model):
                     'data_materia',)
 
     def __str__(self):
-        return _('Nº%(numero)s %(tipo)s - %(data)s') % {
+        return _('%(numero)s/%(ano)s') % {
             'numero': self.numero_materia,
-            'tipo': self.tipo_materia,
-            'data': self.data_materia}
+            'ano': self.data_materia.year}
 
 
 class Orgao(models.Model):
@@ -584,11 +597,26 @@ class Proposicao(models.Model):
         verbose_name = _('Proposição')
         verbose_name_plural = _('Proposições')
         unique_together = (('content_type', 'object_id'), )
+        permissions = (
+            ('detail_proposicao_enviada',
+             _('Pode acessar detalhes de uma proposição enviada.')),
+            ('detail_proposicao_devolvida',
+             _('Pode acessar detalhes de uma proposição devolvida.')),
+            ('detail_proposicao_incorporada',
+             _('Pode acessar detalhes de uma proposição incorporada.')),
+        )
 
     def __str__(self):
         return '%s %s/%s' % (Proposicao._meta.verbose_name,
                              self.numero_proposicao,
                              self.ano)
+
+    def delete(self, using=None, keep_parents=False):
+        if self.texto_original:
+            self.texto_original.delete()
+
+        return models.Model.delete(
+            self, using=using, keep_parents=keep_parents)
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
