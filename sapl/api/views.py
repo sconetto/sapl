@@ -2,11 +2,12 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
+from rest_framework import viewsets
 from rest_framework.filters import DjangoFilterBackend
 from rest_framework.generics import ListAPIView
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
-from rest_framework.viewsets import GenericViewSet
+from rest_framework.viewsets import GenericViewSet, ViewSet
 
 from sapl.api.forms import AutorChoiceFilterSet
 from sapl.api.serializers import (AutorChoiceSerializer, AutorSerializer,
@@ -15,6 +16,7 @@ from sapl.api.serializers import (AutorChoiceSerializer, AutorSerializer,
                                   ModelChoiceSerializer)
 from sapl.base.models import Autor, TipoAutor
 from sapl.materia.models import MateriaLegislativa
+from sapl.sessao.models import SessaoPlenaria
 from sapl.utils import SaplGenericRelation, sapl_logger
 
 
@@ -197,7 +199,7 @@ class MateriaLegislativaViewSet(ListModelMixin,
                                 RetrieveModelMixin,
                                 GenericViewSet):
 
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticatedOrReadOnly,)
     serializer_class = MateriaLegislativaSerializer
     queryset = MateriaLegislativa.objects.all()
     filter_backends = (DjangoFilterBackend,)
