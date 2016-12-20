@@ -77,6 +77,7 @@ INSTALLED_APPS = (
     'crispy_forms',
     'easy_thumbnails',
     'floppyforms',
+    'haystack',
     'sass_processor',
     'rest_framework',
 
@@ -119,6 +120,15 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.DjangoFilterBackend",
     ),
+}
+
+
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
+        'URL': 'http://127.0.0.1:9200/',
+        'INDEX_NAME': 'haystack',
+    },
 }
 
 

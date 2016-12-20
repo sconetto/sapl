@@ -20,6 +20,8 @@ from django.contrib import admin
 from django.views.generic.base import TemplateView, RedirectView
 from django.views.static import serve as view_static_server
 
+# import haystack
+
 import sapl.api.urls
 import sapl.base.urls
 import sapl.comissoes.urls
@@ -49,6 +51,9 @@ urlpatterns = [
     url(r'', include(sapl.protocoloadm.urls)),
     url(r'', include(sapl.compilacao.urls)),
     url(r'', include(sapl.relatorios.urls)),
+
+    # url(r'search/', include('haystack.urls')),
+
 
     # must come at the end
     #   so that base /sistema/ url doesn't capture its children

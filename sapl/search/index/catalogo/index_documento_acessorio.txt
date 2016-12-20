@@ -1,0 +1,3 @@
+{{ object.path }}
+{{ object.nome }}
+{{ object.primary_key}}
