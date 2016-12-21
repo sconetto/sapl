@@ -28,3 +28,5 @@ rtyaml==0.0.3
 unipath==1.1
 python-magic==0.4.12
 gunicorn==19.6.0
+haystack==0.36
+elasticsearch==5.0.1

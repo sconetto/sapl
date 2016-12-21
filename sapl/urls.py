@@ -52,7 +52,7 @@ urlpatterns = [
     url(r'', include(sapl.compilacao.urls)),
     url(r'', include(sapl.relatorios.urls)),
 
-    # url(r'search/', include('haystack.urls')),
+    url(r'search/', include('haystack.urls')),
 
 
     # must come at the end
