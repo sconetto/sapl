@@ -14,17 +14,16 @@ app_name = AppConfig.name
 
 router = DefaultRouter()
 router.register(r'materia', MateriaLegislativaViewSet)
-router.register(r'sessao', MobileSessaoPlenariaViewSet)
 urlpatterns_router = router.urls
 
+router_mobile = DefaultRouter()
+router_mobile.register(r'sessao', MobileSessaoPlenariaViewSet)
+urlpatterns_router_mobile = router_mobile.urls
 
 urlpatterns_api = [
-
     url(r'^autor', AutorListView.as_view(), name='autor_list'),
-
     url(r'^model/(?P<content_type>\d+)/(?P<pk>\d*)$',
         ModelChoiceView.as_view(), name='model_list'),
-
 ]
 
 if settings.DEBUG:
@@ -33,5 +32,6 @@ if settings.DEBUG:
 
 urlpatterns = [
     url(r'^api/', include(urlpatterns_api)),
-    url(r'^api/', include(urlpatterns_router))
+    url(r'^api/', include(urlpatterns_router)),
+    url(r'^api/mobile/', include(urlpatterns_router_mobile))
 ]
