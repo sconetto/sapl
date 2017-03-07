@@ -17,6 +17,6 @@ class Migration(migrations.Migration):
             model_name='materialegislativa',
             name='texto_original',
             field=models.FileField(verbose_name='Texto Original (PDF)',
-                                   upload_to=sapl.materia.models.texto_upload_path, blank=True, null=True),
+                                   upload_to=sapl.materia.models.texto_upload_path_public, blank=True, null=True),
         ),
     ]

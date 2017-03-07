@@ -6,7 +6,7 @@ from model_utils import Choices
 
 from sapl.compilacao.models import TextoArticulado
 from sapl.materia.models import MateriaLegislativa
-from sapl.utils import RANGE_ANOS, YES_NO_CHOICES, texto_upload_path
+from sapl.utils import RANGE_ANOS, YES_NO_CHOICES, texto_upload_path_public
 
 
 class AssuntoNorma(models.Model):
@@ -65,7 +65,7 @@ class NormaJuridica(models.Model):
     texto_integral = models.FileField(
         blank=True,
         null=True,
-        upload_to=texto_upload_path,
+        upload_to=texto_upload_path_public,
         verbose_name=_('Texto Integral'))
     tipo = models.ForeignKey(
         TipoNormaJuridica, verbose_name=_('Tipo da Norma Juridica'))

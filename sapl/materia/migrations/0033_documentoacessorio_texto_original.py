@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='documentoacessorio',
             name='texto_original',
-            field=models.FileField(blank=True, null=True, upload_to=sapl.materia.models.texto_upload_path, validators=[
+            field=models.FileField(blank=True, null=True, upload_to=sapl.materia.models.texto_upload_path_public, validators=[
                                    sapl.utils.restringe_tipos_de_arquivo_txt], verbose_name='Texto Integral'),
         ),
     ]

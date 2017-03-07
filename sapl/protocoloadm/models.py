@@ -4,7 +4,7 @@ from model_utils import Choices
 
 from sapl.base.models import Autor
 from sapl.materia.models import TipoMateriaLegislativa, UnidadeTramitacao
-from sapl.utils import RANGE_ANOS, YES_NO_CHOICES, texto_upload_path
+from sapl.utils import RANGE_ANOS, YES_NO_CHOICES, texto_upload_path_public
 
 
 class TipoDocumentoAdministrativo(models.Model):
@@ -40,7 +40,7 @@ https://github.com/interlegis/sapl/issues/751
 a solução dela deverá dar o correto tratamento a essa questão.
 
 
-def texto_upload_path(instance, filename):
+def texto_upload_path_public(instance, filename):
     return '/'.join([instance._meta.model_name, str(uuid4()), filename])
 """
 
@@ -70,7 +70,7 @@ class DocumentoAdministrativo(models.Model):
     texto_integral = models.FileField(
         blank=True,
         null=True,
-        upload_to=texto_upload_path,
+        upload_to=texto_upload_path_public,
         verbose_name=_('Texto Integral'))
 
     class Meta:
@@ -115,7 +115,7 @@ class DocumentoAcessorioAdministrativo(models.Model):
     arquivo = models.FileField(
         blank=True,
         null=True,
-        upload_to=texto_upload_path,
+        upload_to=texto_upload_path_public,
         verbose_name=_('Arquivo'))
     data = models.DateField(blank=True, null=True, verbose_name=_('Data'))
     autor = models.CharField(

@@ -16,6 +16,6 @@ class Migration(migrations.Migration):
             model_name='normajuridica',
             name='texto_integral',
             field=models.FileField(
-                null=True, verbose_name='Texto Integral', upload_to=sapl.norma.models.texto_upload_path, blank=True),
+                null=True, verbose_name='Texto Integral', upload_to=sapl.norma.models.texto_upload_path_public, blank=True),
         ),
     ]

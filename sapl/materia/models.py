@@ -16,7 +16,7 @@ from sapl.compilacao.models import (PerfilEstruturalTextoArticulado,
 from sapl.parlamentares.models import Parlamentar
 from sapl.utils import (RANGE_ANOS, YES_NO_CHOICES, SaplGenericForeignKey,
                         SaplGenericRelation, restringe_tipos_de_arquivo_txt,
-                        texto_upload_path)
+                        texto_upload_path_public)
 
 EM_TRAMITACAO = [(1, 'Sim'),
                  (0, 'Não')]
@@ -181,7 +181,7 @@ class MateriaLegislativa(models.Model):
     texto_original = models.FileField(
         blank=True,
         null=True,
-        upload_to=texto_upload_path,
+        upload_to=texto_upload_path_public,
         verbose_name=_('Texto Original'),
         validators=[restringe_tipos_de_arquivo_txt])
 
@@ -344,7 +344,7 @@ class DocumentoAcessorio(models.Model):
     arquivo = models.FileField(
         blank=True,
         null=True,
-        upload_to=texto_upload_path,
+        upload_to=texto_upload_path_public,
         verbose_name=_('Texto Integral'),
         validators=[restringe_tipos_de_arquivo_txt])
 
@@ -554,7 +554,7 @@ class Proposicao(models.Model):
                                        ('I', 'Incorporada')),
                               verbose_name=_('Status Proposição'))
     texto_original = models.FileField(
-        upload_to=texto_upload_path,
+        upload_to=texto_upload_path_public,
         blank=True,
         null=True,
         verbose_name=_('Texto Original'),

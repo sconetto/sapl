@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='materialegislativa',
             name='texto_original',
-            field=models.FileField(blank=True, null=True, upload_to=sapl.utils.texto_upload_path, validators=[sapl.utils.restringe_tipos_de_arquivo_txt], verbose_name='Texto Original'),
+            field=models.FileField(blank=True, null=True, upload_to=sapl.utils.texto_upload_path_public, validators=[sapl.utils.restringe_tipos_de_arquivo_txt], verbose_name='Texto Original'),
         ),
         migrations.AlterField(
             model_name='numeracao',

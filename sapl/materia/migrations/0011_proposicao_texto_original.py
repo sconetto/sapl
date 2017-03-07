@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='proposicao',
             name='texto_original',
-            field=models.FileField(upload_to=sapl.materia.models.texto_upload_path,
+            field=models.FileField(upload_to=sapl.materia.models.texto_upload_path_public,
                                    verbose_name='Texto Original (PDF)', blank=True, null=True),
         ),
     ]

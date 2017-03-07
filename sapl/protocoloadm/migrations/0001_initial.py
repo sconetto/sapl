@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('nome', models.CharField(max_length=30, verbose_name='Nome')),
-                ('arquivo', models.FileField(blank=True, null=True, upload_to=sapl.protocoloadm.models.texto_upload_path, verbose_name='Arquivo')),
+                ('arquivo', models.FileField(blank=True, null=True, upload_to=sapl.protocoloadm.models.texto_upload_path_public, verbose_name='Arquivo')),
                 ('data', models.DateField(blank=True, null=True, verbose_name='Data')),
                 ('autor', models.CharField(blank=True, max_length=50, verbose_name='Autor')),
                 ('assunto', models.TextField(blank=True, verbose_name='Assunto')),
@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
                 ('tramitacao', models.BooleanField(choices=[(True, 'Sim'), (False, 'Não')], verbose_name='Em Tramitação?')),
                 ('assunto', models.TextField(verbose_name='Assunto')),
                 ('observacao', models.TextField(blank=True, verbose_name='Observação')),
-                ('texto_integral', models.FileField(blank=True, null=True, upload_to=sapl.protocoloadm.models.texto_upload_path, verbose_name='Texto Integral')),
+                ('texto_integral', models.FileField(blank=True, null=True, upload_to=sapl.protocoloadm.models.texto_upload_path_public, verbose_name='Texto Integral')),
                 ('autor', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='materia.Autor')),
             ],
             options={

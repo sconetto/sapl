@@ -8,7 +8,8 @@ from sapl.materia.models import MateriaLegislativa
 from sapl.parlamentares.models import (CargoMesa, Legislatura, Parlamentar,
                                        Partido, SessaoLegislativa)
 from sapl.utils import (YES_NO_CHOICES, SaplGenericRelation,
-                        restringe_tipos_de_arquivo_txt, texto_upload_path)
+                        restringe_tipos_de_arquivo_txt,
+                        texto_upload_path_public)
 
 
 class CargoBancada(models.Model):
@@ -77,17 +78,17 @@ def get_sessao_media_path(instance, subpath, filename):
 
 
 def pauta_upload_path(instance, filename):
-    return texto_upload_path(instance, filename, subpath='pauta')
+    return texto_upload_path_public(instance, filename, subpath='pauta')
     # return get_sessao_media_path(instance, 'pauta', filename)
 
 
 def ata_upload_path(instance, filename):
-    return texto_upload_path(instance, filename, subpath='ata')
+    return texto_upload_path_public(instance, filename, subpath='ata')
     # return get_sessao_media_path(instance, 'ata', filename)
 
 
 def anexo_upload_path(instance, filename):
-    return texto_upload_path(instance, filename, subpath='anexo')
+    return texto_upload_path_public(instance, filename, subpath='anexo')
     # return get_sessao_media_path(instance, 'anexo', filename)
 
 
