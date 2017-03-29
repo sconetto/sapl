@@ -9,6 +9,7 @@ from django import forms
 from django.conf.urls import url
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models.fields.related import ForeignKey
@@ -839,6 +840,12 @@ class CrudDeleteView(PermissionRequiredContainerCrudMixin,
 
     def get_success_url(self):
         return self.list_url
+
+    def post(self, request, *args, **kwargs):
+        try:
+            return self.delete(request, *args, **kwargs)
+        except:
+            raise ValidationError('Erro')
 
 
 class Crud:
