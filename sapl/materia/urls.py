@@ -41,7 +41,7 @@ urlpatterns_impressos = [
     url(r'^materia/impressos/ficha-pesquisa$',
         FichaPesquisaView.as_view(),
         name='impressos_ficha'),
-    url(r'^materia/impressos/guia-remessas-pesquisa$',
+    url(r'^materia/impressos/guia-remessa-pesquisa$',
         GuiaRemessaPesquisaView.as_view(),
         name='impressos_guiaremessa'),
     url(r'^materia/impressos/espelho-pesquisa$',

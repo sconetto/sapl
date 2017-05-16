@@ -33,6 +33,7 @@ from sapl.crud.base import (ACTION_CREATE, ACTION_DELETE, ACTION_DETAIL,
                             Crud, CrudAux, MasterDetailCrud,
                             PermissionRequiredForAppCrudMixin, make_pagination)
 from sapl.materia.forms import (AnexadaForm, ConfirmarProposicaoForm,
+                                EtiquetaPesquisaForm,
                                 LegislacaoCitadaForm, ProposicaoForm,
                                 TipoProposicaoForm)
 from sapl.norma.models import LegislacaoCitada
@@ -1709,8 +1710,9 @@ class ImpressosView(TemplateView):
 
 
 class EtiquetaPesquisaView(FormView):
+    form_class = EtiquetaPesquisaForm
+    template_name = 'materia/impressos/etiqueta.html'
     # success_url = colocar url do relatorio
-    # form_class = EtiquetaPesquisaForm
 
     def form_valid(self, form):
         return HttpResponseRedirect(self.get_success_url())
