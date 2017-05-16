@@ -10,7 +10,7 @@ from sapl.materia.views import (AcompanhamentoConfirmarView,
                                 DocumentoAcessorioEmLoteView,
                                 EtiquetaPesquisaView, EspelhoPesquisaView,
                                 FichaPesquisaView,
-                                GuiaRemessasPesquisaView, ImpressosView,
+                                GuiaRemessaPesquisaView, ImpressosView,
                                 LegislacaoCitadaCrud, MateriaAssuntoCrud,
                                 MateriaLegislativaCrud,
                                 MateriaLegislativaPesquisaView, MateriaTaView,
@@ -33,15 +33,20 @@ app_name = AppConfig.name
 
 urlpatterns_impressos = [
     url(r'^materia/impressos$',
-        ImpressosView.as_view()),
-    url(r'^materia/etiqueta-pesquisa$',
-        EtiquetaPesquisaView.as_view()),
-    url(r'^materia/ficha-pesquisa$',
-        FichaPesquisaView.as_view()),
-    url(r'^materia/guia-remessas-pesquisa$',
-        GuiaRemessasPesquisaView.as_view()),
-    url(r'^materia/espelho-pesquisa$',
-        EspelhoPesquisaView.as_view()),
+        ImpressosView.as_view(),
+        name='impressos'),
+    url(r'^materia/impressos/etiqueta-pesquisa$',
+        EtiquetaPesquisaView.as_view(),
+        name='impressos_etiqueta'),
+    url(r'^materia/impressos/ficha-pesquisa$',
+        FichaPesquisaView.as_view(),
+        name='impressos_ficha'),
+    url(r'^materia/impressos/guia-remessas-pesquisa$',
+        GuiaRemessaPesquisaView.as_view(),
+        name='impressos_guiaremessa'),
+    url(r'^materia/impressos/espelho-pesquisa$',
+        EspelhoPesquisaView.as_view(),
+        name='impressos_espelho'),
 ]
 
 
@@ -138,4 +143,4 @@ urlpatterns_sistema = [
 
 
 urlpatterns = urlpatterns_materia + \
-    urlpatterns_proposicao + urlpatterns_sistema
+    urlpatterns_proposicao + urlpatterns_sistema + urlpatterns_impressos

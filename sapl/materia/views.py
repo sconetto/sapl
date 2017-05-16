@@ -1705,7 +1705,7 @@ class TramitacaoEmLoteView(PrimeiraTramitacaoEmLoteView):
 
 
 class ImpressosView(TemplateView):
-    template_name = 'sapl/templates/materia/impressos/impressos.html'
+    template_name = 'materia/impressos/impressos.html'
 
 
 class EtiquetaPesquisaView(FormView):
@@ -1724,7 +1724,7 @@ class FichaPesquisaView(FormView):
         return HttpResponseRedirect(self.get_success_url())
 
 
-class GuiaRemessasPesquisaView(FormView):
+class GuiaRemessaPesquisaView(FormView):
     # success_url = colocar url do relatorio
     # form_class = GuiaRemessasPesquisaForm
 
