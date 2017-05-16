@@ -1523,8 +1523,8 @@ class EtiquetaPesquisaForm(forms.Form):
                     'Caso pesquise por número de processo, os campos de ' +
                     'Processo Inicial e Processo Final ' +
                     'devem ser preenchidos obrigatoriamente'))
-        elif cleaned_data['processo_final'] < cleaned_data['processo_inicial']:
-                raise ValidationError(_(
-                    'O processo final não pode ser menor que o inicial'))
+            elif cleaned_data['processo_final'] < cleaned_data['processo_inicial']:
+                    raise ValidationError(_(
+                        'O processo final não pode ser menor que o inicial'))
 
         return cleaned_data

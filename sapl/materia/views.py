@@ -13,7 +13,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, JsonResponse
 from django.http.response import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
-from django.template import Context, loader
+from django.template import Context, loader, RequestContext
 from django.utils import formats
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import CreateView, ListView, TemplateView, UpdateView
@@ -22,6 +22,8 @@ from django.views.generic.edit import FormView
 from django_filters.views import FilterView
 
 import sapl
+import weasyprint
+
 from sapl.base.models import Autor, CasaLegislativa
 from sapl.comissoes.models import Comissao, Participacao
 from sapl.compilacao.models import (STATUS_TA_IMMUTABLE_RESTRICT,
@@ -1709,34 +1711,50 @@ class ImpressosView(TemplateView):
     template_name = 'materia/impressos/impressos.html'
 
 
+def gerar_pdf_impresso(request, context):
+    template = loader.get_template('materia/impressos/pdf.html')
+    html = template.render(RequestContext(request, context))
+    response = HttpResponse(content_type="application/pdf")
+    weasyprint.HTML(
+        string=html,
+        base_url=request.build_absolute_uri()).write_pdf(
+        response)
+
+    return response
+
+
 class EtiquetaPesquisaView(FormView):
     form_class = EtiquetaPesquisaForm
     template_name = 'materia/impressos/etiqueta.html'
-    # success_url = colocar url do relatorio
 
     def form_valid(self, form):
-        return HttpResponseRedirect(self.get_success_url())
+        context = {}
+
+        return gerar_pdf_impresso(self.request, context)
 
 
 class FichaPesquisaView(FormView):
-    # success_url = colocar url do relatorio
     # form_class = FichaPesquisaForm
 
     def form_valid(self, form):
-        return HttpResponseRedirect(self.get_success_url())
+        context = {}
+
+        return gerar_pdf_impresso(self.request, context)
 
 
 class GuiaRemessaPesquisaView(FormView):
-    # success_url = colocar url do relatorio
     # form_class = GuiaRemessasPesquisaForm
 
     def form_valid(self, form):
-        return HttpResponseRedirect(self.get_success_url())
+        context = {}
+
+        return gerar_pdf_impresso(self.request, context)
 
 
 class EspelhoPesquisaView(FormView):
-    # success_url = colocar url do relatorio
     # form_class = EspelhoPesquisaForm
 
     def form_valid(self, form):
-        return HttpResponseRedirect(self.get_success_url())
+        context = {}
+
+        return gerar_pdf_impresso(self.request, context)
