@@ -1702,3 +1702,39 @@ class PrimeiraTramitacaoEmLoteView(PermissionRequiredMixin, FilterView):
 
 class TramitacaoEmLoteView(PrimeiraTramitacaoEmLoteView):
     filterset_class = TramitacaoEmLoteFilterSet
+
+
+class ImpressosView(TemplateView):
+    template_name = 'sapl/templates/materia/impressos/impressos.html'
+
+
+class EtiquetaPesquisaView(FormView):
+    # success_url = colocar url do relatorio
+    # form_class = EtiquetaPesquisaForm
+
+    def form_valid(self, form):
+        return HttpResponseRedirect(self.get_success_url())
+
+
+class FichaPesquisaView(FormView):
+    # success_url = colocar url do relatorio
+    # form_class = FichaPesquisaForm
+
+    def form_valid(self, form):
+        return HttpResponseRedirect(self.get_success_url())
+
+
+class GuiaRemessasPesquisaView(FormView):
+    # success_url = colocar url do relatorio
+    # form_class = GuiaRemessasPesquisaForm
+
+    def form_valid(self, form):
+        return HttpResponseRedirect(self.get_success_url())
+
+
+class EspelhoPesquisaView(FormView):
+    # success_url = colocar url do relatorio
+    # form_class = EspelhoPesquisaForm
+
+    def form_valid(self, form):
+        return HttpResponseRedirect(self.get_success_url())
