@@ -1730,6 +1730,31 @@ class EtiquetaPesquisaView(FormView):
     def form_valid(self, form):
         context = {}
 
+        materias = MateriaLegislativa.objects.all().order_by(
+            '-data_apresentacao')
+
+        if form.cleaned_data['tipo_materia']:
+            materias = materias.filter(tipo=form.cleaned_data['tipo_materia'])
+
+        if form.cleaned_data['data_inicial']:
+            materias = materias.filter(
+                data_apresentacao__gte=form.cleaned_data['data_inicial'],
+                data_apresentacao__lte=form.cleaned_data['data_final'])
+
+        if form.cleaned_data['processo_inicial']:
+            materias = materias.filter(
+                numeracao__numero_materia__gte=form.cleaned_data[
+                    'processo_inicial'],
+                numeracao__numero_materia__lte=form.cleaned_data[
+                    'processo_final'])
+
+        context['quantidade'] = len(materias)
+
+        if context['quantidade'] > 20:
+            materias = materias[:20]
+
+        context['materias'] = materias
+
         return gerar_pdf_impresso(self.request, context)
 
 

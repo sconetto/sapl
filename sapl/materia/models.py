@@ -126,7 +126,7 @@ def anexo_upload_path(instance, filename):
     
 @reversion.register()
 class MateriaLegislativa(models.Model):
-      
+
     tipo = models.ForeignKey(TipoMateriaLegislativa,
                              on_delete=models.PROTECT,
                              verbose_name=_('Tipo'))
@@ -260,7 +260,6 @@ class MateriaLegislativa(models.Model):
                                  using=using,
                                  update_fields=update_fields)
         
-
 
 @reversion.register()
 class Autoria(models.Model):
@@ -465,8 +464,7 @@ class Numeracao(models.Model):
         TipoMateriaLegislativa,
         on_delete=models.PROTECT,
         verbose_name=_('Tipo de Matéria'))
-    numero_materia = models.CharField(max_length=5,
-                                      verbose_name=_('Número'))
+    numero_materia = models.IntegerField(verbose_name=_('Número'))
     ano_materia = models.PositiveSmallIntegerField(verbose_name=_('Ano'),
                                                    choices=RANGE_ANOS)
     data_materia = models.DateField(verbose_name=_('Data'))

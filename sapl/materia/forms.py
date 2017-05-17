@@ -1453,6 +1453,7 @@ class EtiquetaPesquisaForm(forms.Form):
     tipo_materia = forms.ModelChoiceField(
         label=TipoMateriaLegislativa._meta.verbose_name,
         queryset=TipoMateriaLegislativa.objects.all(),
+        required=False,
         empty_label='Selecione')
 
     data_inicial = forms.DateField(
@@ -1523,7 +1524,8 @@ class EtiquetaPesquisaForm(forms.Form):
                     'Caso pesquise por número de processo, os campos de ' +
                     'Processo Inicial e Processo Final ' +
                     'devem ser preenchidos obrigatoriamente'))
-            elif cleaned_data['processo_final'] < cleaned_data['processo_inicial']:
+            elif (cleaned_data['processo_final'] <
+                  cleaned_data['processo_inicial']):
                     raise ValidationError(_(
                         'O processo final não pode ser menor que o inicial'))
 

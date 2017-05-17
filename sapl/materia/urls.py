@@ -32,19 +32,19 @@ app_name = AppConfig.name
 
 
 urlpatterns_impressos = [
-    url(r'^materia/impressos$',
+    url(r'^materia/impressos/$',
         ImpressosView.as_view(),
         name='impressos'),
-    url(r'^materia/impressos/etiqueta-pesquisa$',
+    url(r'^materia/impressos/etiqueta-pesquisa/$',
         EtiquetaPesquisaView.as_view(),
         name='impressos_etiqueta'),
-    url(r'^materia/impressos/ficha-pesquisa$',
+    url(r'^materia/impressos/ficha-pesquisa/$',
         FichaPesquisaView.as_view(),
         name='impressos_ficha'),
-    url(r'^materia/impressos/guia-remessa-pesquisa$',
+    url(r'^materia/impressos/guia-remessa-pesquisa/$',
         GuiaRemessaPesquisaView.as_view(),
         name='impressos_guiaremessa'),
-    url(r'^materia/impressos/espelho-pesquisa$',
+    url(r'^materia/impressos/espelho-pesquisa/$',
         EspelhoPesquisaView.as_view(),
         name='impressos_espelho'),
 ]
