@@ -151,3 +151,64 @@ def test_create_tramitacao(admin_client):
     tramitacao = TramitacaoAdministrativo.objects.last()
     # Verifica se a tramitacao que obedece as regras de negócios é criada
     assert tramitacao.data_tramitacao == datetime.date(2016, 8, 21)
+
+@pytest.mark.django_db(transaction=False)
+def test_protocoloadm_protocolo_sem_parametros(admin_client):
+    response = admin_client.get(reverse('sapl.protocoloadm:protocolo'))
+    assert response.status_code == 200
+
+@pytest.mark.django_db(transaction=False)
+def test_protocoloadm_protocolo(admin_client):
+    url = reverse('sapl.protocoloadm:protocolo') + "?numero=&ano=&data_0=01/02/2013&data_1=01/02/2017&salvar=Pesquisar"
+    response = admin_client.get(url)
+    assert response.status_code == 200
+
+@pytest.mark.django_db(transaction=False)
+def test_protocoloadm_protocolo_criar_documento_autenticado(admin_client):
+    # Autentica operador_geral
+    # To-Do
+    # Criar função de setup para criar os usuários padrão do sistema
+    # response = client.post('/login/', {'username': 'operador_geral', 'password': 'interlegis'}, follow=True)
+    # assert response.status_code == 200
+    # assert  not(response.context_data.get('view') == None)
+
+    sigla = 'd_adm'
+    descricao = 'documento administrativo'
+    mommy.make(TipoDocumentoAdministrativo, sigla=sigla, descricao=descricao)
+
+    pk = '999'
+    numero_protocolo = '1'
+    ano_protocolo = '2017'
+
+    tipo_documento = TipoDocumentoAdministrativo.objects.first()
+    mommy.make(Protocolo, pk = pk, tipo_documento=tipo_documento, numero=numero_protocolo, ano=ano_protocolo, anulado=False)
+
+    url = reverse('sapl.protocoloadm:criar_documento', kwargs={'pk':pk})
+
+    numero_documento = '56'
+    assunto = 'assunto9876453 21'
+    ano = '2017'
+    data = '07/06/2017'
+
+    response = admin_client.post(url,
+                            {'tipo': tipo_documento.pk,
+                            'numero_protocolo':numero_protocolo,
+                            'ano_protocolo': ano_protocolo,
+                            'numero': numero_documento,
+                            'assunto': assunto,
+                            'ano': ano,
+                            'data': data}, follow=True)
+
+
+    assert response.status_code == 200
+
+    documento = DocumentoAdministrativo.objects.get(numero=numero_documento, ano=ano)
+
+    assert documento
+    assert documento.numero == int(numero_documento)
+    assert documento.ano == int(ano)
+    assert documento.numero_protocolo == int(numero_protocolo)
+    assert documento.assunto == assunto
+    assert documento.protocolo.ano == int(ano_protocolo)
+    assert documento.tipo == tipo_documento
+    assert documento.data.strftime("%d/%m/%Y") == data
